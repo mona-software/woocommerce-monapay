@@ -1,0 +1,10 @@
+WordPress.org banner placeholder for MONA Pay for WooCommerce.
+
+Before submission, replace this file with:
+- banner-772x250.png (or .jpg)
+- banner-1544x500.png (optional Retina version)
+
+Suggested content: MONA Pay logo, VietQR checkout visual, and the title
+“Chuyển khoản VietQR — tự động xác nhận”. Do not ship this placeholder as an
+actual banner image.
+

@@ -1,0 +1,229 @@
+# Copyright (C) 2026 The MONA Group
+# This file is distributed under the same license as the MONA Pay for WooCommerce package.
+msgid ""
+msgstr ""
+"Project-Id-Version: MONA Pay for WooCommerce 0.1.0\n"
+"Report-Msgid-Bugs-To: info@themona.global\n"
+"POT-Creation-Date: 2026-08-29 00:31+0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Base URL"
+msgstr ""
+
+msgid "Base URL MONA Pay không hợp lệ."
+msgstr ""
+
+msgid "Bạn không có quyền thực hiện thao tác này."
+msgstr ""
+
+msgid "Bật thanh toán MONA Pay VietQR"
+msgstr ""
+
+msgid "Bật/tắt"
+msgstr ""
+
+msgid "Chuyển khoản VietQR (tự xác nhận)"
+msgstr ""
+
+msgid "Chuyển thẳng đơn sang Hoàn tất sau khi nhận đủ tiền"
+msgstr ""
+
+msgid "Chưa thể tạo mã VietQR. Vui lòng thử lại hoặc chọn phương thức thanh toán khác."
+msgstr ""
+
+msgid "Client Secret"
+msgstr ""
+
+msgid "Cá nhân (PER)"
+msgstr ""
+
+msgid "Cấu hình và kiểm tra"
+msgstr ""
+
+msgid "Dùng HMAC-SHA256 để chỉ chấp nhận webhook thật từ MONA Pay."
+msgstr ""
+
+msgid "Dùng cùng secret này khi tạo cấu hình webhook HMAC_SHA256 trên MONA Pay. Nên dài ít nhất 32 ký tự."
+msgstr ""
+
+msgid "Dùng tài khoản tại my.monapay.vn và Client Secret đã tạo trong mục API keys."
+msgstr ""
+
+msgid "Gửi một giao dịch giả lập từ MONA Pay tới website này?"
+msgstr ""
+
+msgid "Gửi trong header X-Client-Secret khi tạo QR và gửi webhook thử."
+msgstr ""
+
+msgid "Gửi webhook thử"
+msgstr ""
+
+msgid "Hãy lưu Secret HMAC dài ít nhất 32 ký tự trước."
+msgstr ""
+
+msgid "Không thể gửi webhook thử."
+msgstr ""
+
+msgid "Không tìm thấy đơn hàng để tạo VietQR."
+msgstr ""
+
+msgid "Kết nối MONA Pay"
+msgstr ""
+
+msgid "Loại chủ tài khoản"
+msgstr ""
+
+msgid "MONA Pay VietQR"
+msgstr ""
+
+msgid "MONA Pay VietQR chỉ hỗ trợ đơn hàng VND."
+msgstr ""
+
+msgid "MONA Pay for WooCommerce cần WooCommerce được cài đặt và kích hoạt."
+msgstr ""
+
+#. translators: 1: received amount, 2: required amount, 3: bank transaction code.
+#, php-format
+msgid "MONA Pay nhận thiếu: %1$s / %2$s VND (mã %3$s). Đơn chưa được xác nhận."
+msgstr ""
+
+msgid "MONA Pay tự động hoàn tất đơn theo cấu hình."
+msgstr ""
+
+#. translators: %s: bank transaction code.
+#, php-format
+msgid "MONA Pay đã tự động xác nhận thanh toán. Mã giao dịch: %s."
+msgstr ""
+
+msgid "Merchant ID"
+msgstr ""
+
+msgid "Mã VietQR thanh toán đơn hàng"
+msgstr ""
+
+msgid "Mô tả"
+msgstr ""
+
+msgid "Mật khẩu MONA Pay"
+msgstr ""
+
+msgid "Mở MONA Pay Dashboard"
+msgstr ""
+
+msgid "Mở ảnh QR:"
+msgstr ""
+
+msgid "Người thụ hưởng:"
+msgstr ""
+
+msgid "Nếu tắt, WooCommerce chọn Đang xử lý/Hoàn tất theo loại sản phẩm sau payment_complete()."
+msgstr ""
+
+msgid "Nội dung chuyển khoản:"
+msgstr ""
+
+msgid "Nội dung hiển thị bên dưới phương thức thanh toán."
+msgstr ""
+
+msgid "Quét VietQR để thanh toán"
+msgstr ""
+
+msgid "Quét mã VietQR để chuyển khoản. Đơn hàng được xác nhận tự động khi MONA Pay nhận giao dịch."
+msgstr ""
+
+msgid "Quý khách vui lòng kiểm tra thông tin thanh toán trước khi thực hiện giao dịch."
+msgstr ""
+
+msgid "Sao chép đúng các giá trị ACB/MONA Pay đã cấp cho tài khoản nhận tiền."
+msgstr ""
+
+msgid "Secret HMAC webhook"
+msgstr ""
+
+msgid "Secret HMAC webhook phải dài ít nhất 32 ký tự."
+msgstr ""
+
+msgid "Số tài khoản nhận tiền"
+msgstr ""
+
+msgid "Số tài khoản ảo:"
+msgstr ""
+
+msgid "THANH TOÁN VIETQR MONA PAY"
+msgstr ""
+
+msgid "Terminal ID"
+msgstr ""
+
+msgid "Thông tin VietQR"
+msgstr ""
+
+msgid "Tiêu đề"
+msgstr ""
+
+msgid "Trong dashboard my.monapay.vn, tạo webhook với URL trên, auth_type HMAC_SHA256, payload application/json và cùng Secret HMAC. Lưu cài đặt này trước khi gửi thử."
+msgstr ""
+
+msgid "Tên người thụ hưởng"
+msgstr ""
+
+msgid "Tên phương thức khách thấy tại trang thanh toán."
+msgstr ""
+
+msgid "Tên đăng nhập MONA Pay"
+msgstr ""
+
+msgid "Tạo VietQR theo từng đơn và tự xác nhận thanh toán bằng webhook HMAC của MONA Pay."
+msgstr ""
+
+msgid "Tổ chức (ORG)"
+msgstr ""
+
+msgid "Tổng đơn vượt giới hạn tạo VietQR của MONA Pay."
+msgstr ""
+
+msgid "Tự hoàn tất đơn"
+msgstr ""
+
+msgid "Tự sinh secret"
+msgstr ""
+
+msgid "URL gốc của MONA Pay API, không thêm /api/v1."
+msgstr ""
+
+msgid "Webhook thử đã được MONA Pay gửi và endpoint trả về thành công."
+msgstr ""
+
+msgid "Webhook tự xác nhận"
+msgstr ""
+
+msgid "beneficiaryName hiển thị trên ứng dụng ngân hàng, tối đa 100 ký tự."
+msgstr ""
+
+msgid "ownerNumber của tài khoản ACB."
+msgstr ""
+
+msgid "virtualAccountPrefix, dài từ 1 đến 10 ký tự."
+msgstr ""
+
+msgid "Đang gửi webhook thử…"
+msgstr ""
+
+msgid "Đã tạo VietQR MONA Pay; đang chờ giao dịch ngân hàng."
+msgstr ""
+
+msgid "Đã tạo secret mới. Hãy lưu cài đặt và cập nhật cùng secret trên MONA Pay."
+msgstr ""
+
+msgid "Đơn hàng sẽ được xác nhận tự động sau khi ngân hàng ghi nhận giao dịch."
+msgstr ""
+
+msgid "Đầu số tài khoản ảo"
+msgstr ""
+
