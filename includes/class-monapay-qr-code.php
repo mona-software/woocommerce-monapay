@@ -7,7 +7,7 @@
  * GPL-2.0-or-later license as the plugin. It never sends payment data to a
  * third-party QR rendering service.
  *
- * @package WooCommerce_MonaPay
+ * @package MonaPay_WooCommerce
  */
 
 defined( 'ABSPATH' ) || defined( 'MONAPAY_TESTING' ) || exit;

@@ -2,7 +2,7 @@
 /**
  * Signed MONA Pay webhook receiver.
  *
- * @package WooCommerce_MonaPay
+ * @package MonaPay_WooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -204,4 +204,3 @@ class MonaPay_Webhook {
 		wc_get_logger()->log( $level, $message, $context );
 	}
 }
-

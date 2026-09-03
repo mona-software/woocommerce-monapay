@@ -2,7 +2,7 @@
 /**
  * Small pure functions shared by the webhook handler and standalone tests.
  *
- * @package WooCommerce_MonaPay
+ * @package MonaPay_WooCommerce
  */
 
 defined( 'ABSPATH' ) || defined( 'MONAPAY_TESTING' ) || exit;
@@ -54,4 +54,3 @@ if ( ! function_exists( 'monapay_parse_order_id' ) ) {
 		return $order_id > 0 ? $order_id : null;
 	}
 }
-

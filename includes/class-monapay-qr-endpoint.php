@@ -2,7 +2,7 @@
 /**
  * Authenticated image endpoint used by checkout pages and HTML emails.
  *
- * @package WooCommerce_MonaPay
+ * @package MonaPay_WooCommerce
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -75,4 +75,3 @@ class MonaPay_QR_Endpoint {
 		exit;
 	}
 }
-
