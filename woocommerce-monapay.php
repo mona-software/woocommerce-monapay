@@ -3,7 +3,7 @@
  * Plugin Name:       MONA Pay for WooCommerce
  * Plugin URI:        https://monapay.vn/
  * Description:       Nhận thanh toán qua trang MONA Pay hoặc VietQR tại cửa hàng và tự động xác nhận đơn WooCommerce.
- * Version:           0.3.0
+ * Version:           0.3.1
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Requires Plugins:  woocommerce
@@ -21,7 +21,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MONAPAY_WC_VERSION', '0.3.0' );
+define( 'MONAPAY_WC_VERSION', '0.3.1' );
 define( 'MONAPAY_WC_FILE', __FILE__ );
 define( 'MONAPAY_WC_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MONAPAY_WC_URL', plugin_dir_url( __FILE__ ) );

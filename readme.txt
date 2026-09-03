@@ -3,7 +3,7 @@ Contributors: themonagroup
 Tags: monapay, vietqr, bank transfer, payment gateway, woocommerce
 Requires at least: 6.2
 Tested up to: 6.8
-Stable tag: 0.3.0
+Stable tag: 0.3.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -29,7 +29,7 @@ MONA Pay là API ngân hàng cho doanh nghiệp Việt Nam nhận và xác nhậ
 
 Plugin dùng Client ID và Client Secret lấy tại my.monapay.vn, không cần lưu mật khẩu tài khoản MONA Pay. Khi nâng cấp từ 0.1.0, thông tin đăng nhập cũ tiếp tục hoạt động ở chế độ fallback ẩn cho tới khi anh chị lưu Client ID mới.
 
-Dưới ảnh QR ở trang cảm ơn và trang xem đơn, plugin có thể hiển thị dòng “Xác nhận thanh toán tự động bởi MONA Pay” liên kết tới monapay.vn. Tuỳ chọn nhận diện này mặc định bật và có thể tắt trong cài đặt gateway. Plugin không thêm tracker vào liên kết hay giao diện cửa hàng.
+Dưới ảnh QR ở trang cảm ơn và trang xem đơn, plugin có thể hiển thị dòng “Xác nhận thanh toán tự động bởi MONA Pay” liên kết tới monapay.vn. Tuỳ chọn nhận diện này mặc định tắt, chỉ hiển thị khi quản trị viên chủ động bật trong cài đặt gateway. Plugin không thêm tracker vào liên kết hay giao diện cửa hàng.
 
 Plugin không tải thư viện từ CDN và không gửi chuỗi thanh toán tới dịch vụ dựng QR bên thứ ba. Bộ dựng PNG QR Code chế độ byte, mức sửa lỗi M được phát hành cùng plugin theo GPLv2 hoặc mới hơn.
 
@@ -102,6 +102,10 @@ Chính sách bảo mật: https://monapay.vn/chinh-sach-bao-mat
 Plugin lưu ID, token, URL và trạng thái hosted checkout hoặc ID QR, chuỗi QR, số tài khoản ảo, cùng mã giao dịch đã xử lý trong meta riêng của đơn hàng. Client Secret, Secret chữ ký quay về và Secret HMAC webhook được lưu trong cài đặt WordPress của gateway, chỉ dùng phía máy chủ. Front-end và email không nhận các secret này. Plugin không có tracker và không tải tài nguyên từ CDN.
 
 == Changelog ==
+
+= 0.3.1 =
+
+* Dòng nhận diện “Xác nhận thanh toán tự động bởi MONA Pay” chuyển sang mặc định tắt (opt-in), đúng hướng dẫn WordPress.org về liên kết ghi nhận.
 
 = 0.3.0 =
 

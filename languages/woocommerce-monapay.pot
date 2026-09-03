@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the MONA Pay for WooCommerce package.
 msgid ""
 msgstr ""
-"Project-Id-Version: MONA Pay for WooCommerce 0.3.0\n"
+"Project-Id-Version: MONA Pay for WooCommerce 0.3.1\n"
 "Report-Msgid-Bugs-To: info@themona.global\n"
 "POT-Creation-Date: 2026-09-03 14:22+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"

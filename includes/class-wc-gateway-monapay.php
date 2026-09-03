@@ -161,8 +161,8 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 				'title'       => __( 'Nhận diện MONA Pay', 'woocommerce-monapay' ),
 				'type'        => 'checkbox',
 				'label'       => __( 'Hiển thị dòng xác nhận tự động bởi MONA Pay trên trang đơn hàng', 'woocommerce-monapay' ),
-				'default'     => 'yes',
-				'description' => __( 'Tuỳ chọn này mặc định bật và có thể tắt bất kỳ lúc nào.', 'woocommerce-monapay' ),
+				'default'     => 'no',
+				'description' => __( 'Tuỳ chọn này mặc định TẮT; chỉ bật khi quý khách chủ động muốn ghi nhận MONA Pay trên trang đơn hàng.', 'woocommerce-monapay' ),
 			),
 			'webhook_tools'          => array(
 				'title' => __( 'Cấu hình và kiểm tra', 'woocommerce-monapay' ),
@@ -448,7 +448,7 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 			<p><?php esc_html_e( 'Quý khách vui lòng kiểm tra thông tin thanh toán trước khi thực hiện giao dịch.', 'woocommerce-monapay' ); ?></p>
 			<p style="font-size:24px;font-weight:700;margin:12px 0;"><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></p>
 			<p><img src="<?php echo esc_url( $qr_url ); ?>" width="320" height="320" alt="<?php esc_attr_e( 'Mã VietQR thanh toán đơn hàng', 'woocommerce-monapay' ); ?>" style="display:block;max-width:100%;height:auto;margin:16px auto;" /></p>
-			<?php if ( ! $email && 'yes' === $this->get_option( 'show_branding', 'yes' ) ) : ?>
+			<?php if ( ! $email && 'yes' === $this->get_option( 'show_branding', 'no' ) ) : ?>
 				<p style="font-size:12px;margin:-6px 0 16px;color:#6b7280;">
 					<a href="<?php echo esc_url( 'https://monapay.vn?utm_source=woocommerce' ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Xác nhận thanh toán tự động bởi MONA Pay', 'woocommerce-monapay' ); ?></a>
 				</p>
@@ -483,7 +483,7 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 			<?php if ( $is_pending && '' !== $checkout_url ) : ?>
 				<p><a href="<?php echo esc_url( $checkout_url ); ?>" class="<?php echo esc_attr( $email ? 'button' : 'button alt' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Mở lại trang thanh toán', 'woocommerce-monapay' ); ?></a></p>
 			<?php endif; ?>
-			<?php if ( ! $email && 'yes' === $this->get_option( 'show_branding', 'yes' ) ) : ?>
+			<?php if ( ! $email && 'yes' === $this->get_option( 'show_branding', 'no' ) ) : ?>
 				<p style="font-size:12px;margin:16px 0 0;color:#6b7280;"><a href="<?php echo esc_url( 'https://monapay.vn?utm_source=woocommerce' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Xác nhận thanh toán tự động bởi MONA Pay', 'woocommerce-monapay' ); ?></a></p>
 			<?php endif; ?>
 		</section>
