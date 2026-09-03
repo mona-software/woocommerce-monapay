@@ -27,7 +27,7 @@ class MonaPay_Webhook {
 	}
 
 	/**
-	 * Verify and apply an incoming bank transaction.
+	 * Verify and apply an incoming transaction or hosted-checkout event.
 	 *
 	 * @param WP_REST_Request $request REST request.
 	 * @return WP_REST_Response
@@ -50,104 +50,139 @@ class MonaPay_Webhook {
 		}
 
 		$payload = json_decode( $raw_body, true );
-		if ( ! is_array( $payload ) || ! isset( $payload['amount'], $payload['description'], $payload['transaction_code'], $payload['account_number'] ) ) {
-			$this->log( 'warning', 'Webhook có JSON hoặc trường bắt buộc không hợp lệ.' );
+		if ( ! is_array( $payload ) ) {
+			$this->log( 'warning', 'Webhook có JSON không hợp lệ.' );
 			return $this->response( 400, false, 'Payload không hợp lệ.' );
 		}
 
-		$transaction_code = sanitize_text_field( (string) $payload['transaction_code'] );
+		$transaction_code = isset( $payload['transaction_code'] ) ? sanitize_text_field( (string) $payload['transaction_code'] ) : '';
 		if ( 'DUMMY123' === $transaction_code ) {
 			$this->log( 'info', 'Đã xác minh webhook thử MONA Pay.' );
 			return $this->response( 200, true, 'Webhook thử hợp lệ.' );
 		}
 
+		$event = isset( $payload['event'] ) ? (string) $payload['event'] : ( isset( $payload['event_type'] ) ? (string) $payload['event_type'] : '' );
+		if ( 'CHECKOUT_PAID' === $event ) {
+			return $this->handle_checkout_paid( $payload, $settings );
+		}
+		if ( '' !== $event && 'TRANSACTION_IN' !== $event ) {
+			$this->log( 'warning', 'Webhook có loại sự kiện không được hỗ trợ.', array( 'event' => sanitize_text_field( $event ) ) );
+			return $this->response( 400, false, 'Sự kiện không được hỗ trợ.' );
+		}
+
+		return $this->handle_transaction_in( $payload, $settings );
+	}
+
+	/** Apply a CHECKOUT_PAID event by its exact DH order code. */
+	private function handle_checkout_paid( $payload, $settings ) {
+		if ( ! isset( $payload['order_code'], $payload['transaction_code'], $payload['paid_amount'] ) || ! is_numeric( $payload['paid_amount'] ) ) {
+			$this->log( 'warning', 'Webhook CHECKOUT_PAID thiếu trường bắt buộc.' );
+			return $this->response( 400, false, 'Payload CHECKOUT_PAID không hợp lệ.' );
+		}
+
+		if ( isset( $payload['status'] ) && 'paid' !== (string) $payload['status'] ) {
+			$this->log( 'warning', 'Webhook CHECKOUT_PAID có trạng thái không hợp lệ.' );
+			return $this->response( 400, false, 'Trạng thái checkout không hợp lệ.' );
+		}
+
+		$transaction_code = sanitize_text_field( (string) $payload['transaction_code'] );
+		$order_code       = sanitize_text_field( (string) $payload['order_code'] );
+		$checkout_id      = isset( $payload['checkout_id'] ) ? sanitize_text_field( (string) $payload['checkout_id'] ) : '';
+		if ( '' === $transaction_code ) {
+			return $this->response( 400, false, 'Mã giao dịch không hợp lệ.' );
+		}
+
+		$order = $this->find_checkout_order( $order_code, $checkout_id );
+		if ( ! $order ) {
+			$this->log( 'warning', 'Không tìm thấy đơn khớp CHECKOUT_PAID.', array( 'order_code' => $order_code, 'checkout_id' => $checkout_id ) );
+			return $this->response( 200, true, 'Đã nhận CHECKOUT_PAID; không tìm thấy đơn khớp.' );
+		}
+
+		$result = monapay_complete_order_payment(
+			$order,
+			$transaction_code,
+			$payload['paid_amount'],
+			isset( $settings['autocomplete_orders'] ) && 'yes' === $settings['autocomplete_orders']
+		);
+		return $this->payment_result_response( $result, $order, $transaction_code, 'CHECKOUT_PAID' );
+	}
+
+	/** Apply the original flat TRANSACTION_IN payload. */
+	private function handle_transaction_in( $payload, $settings ) {
+		if ( ! isset( $payload['amount'], $payload['description'], $payload['transaction_code'], $payload['account_number'] ) ) {
+			$this->log( 'warning', 'Webhook TRANSACTION_IN thiếu trường bắt buộc.' );
+			return $this->response( 400, false, 'Payload không hợp lệ.' );
+		}
+
+		$transaction_code = sanitize_text_field( (string) $payload['transaction_code'] );
 		if ( '' === $transaction_code || ( isset( $payload['type'] ) && 'income' !== $payload['type'] ) || ! is_numeric( $payload['amount'] ) ) {
 			$this->log( 'warning', 'Webhook không phải giao dịch tiền vào hợp lệ.' );
 			return $this->response( 400, false, 'Giao dịch không hợp lệ.' );
 		}
 
-		$order = $this->find_order( $payload );
+		$order = $this->find_transaction_order( $payload );
 		if ( ! $order ) {
-			$this->log(
-				'warning',
-				'Không tìm thấy đơn khớp webhook.',
-				array( 'transaction_code' => $transaction_code )
-			);
+			$this->log( 'warning', 'Không tìm thấy đơn khớp webhook.', array( 'transaction_code' => $transaction_code ) );
 			return $this->response( 200, true, 'Đã nhận webhook; không tìm thấy đơn khớp.' );
 		}
 
-		$transaction_codes = $order->get_meta( '_monapay_txn_codes', true );
-		$transaction_codes = is_array( $transaction_codes ) ? array_map( 'strval', $transaction_codes ) : array();
-		if ( in_array( $transaction_code, $transaction_codes, true ) || $transaction_code === (string) $order->get_transaction_id() ) {
-			$this->log(
-				'info',
-				'Bỏ qua webhook trùng.',
-				array(
-					'order_id'         => $order->get_id(),
-					'transaction_code' => $transaction_code,
-				)
-			);
-			return $this->response( 200, true, 'Giao dịch đã được xử lý.' );
-		}
-
-		$paid_amount = (int) round( (float) $payload['amount'] );
-		$order_total = (int) round( (float) $order->get_total() );
-		if ( $paid_amount < $order_total ) {
-			$order->add_order_note(
-				sprintf(
-					/* translators: 1: received amount, 2: required amount, 3: bank transaction code. */
-					__( 'MONA Pay nhận thiếu: %1$s / %2$s VND (mã %3$s). Đơn chưa được xác nhận.', 'woocommerce-monapay' ),
-					wc_format_localized_price( $paid_amount ),
-					wc_format_localized_price( $order_total ),
-					$transaction_code
-				)
-			);
-			$this->log(
-				'warning',
-				'Webhook có số tiền thấp hơn tổng đơn.',
-				array(
-					'order_id'         => $order->get_id(),
-					'transaction_code' => $transaction_code,
-				)
-			);
-			return $this->response( 200, true, 'Đã nhận webhook; số tiền chưa đủ.' );
-		}
-
-		$transaction_codes[] = $transaction_code;
-		$order->update_meta_data( '_monapay_txn_codes', array_values( array_unique( $transaction_codes ) ) );
-		$order->save();
-		$order->payment_complete( $transaction_code );
-		$order->add_order_note(
-			sprintf(
-				/* translators: %s: bank transaction code. */
-				__( 'MONA Pay đã tự động xác nhận thanh toán. Mã giao dịch: %s.', 'woocommerce-monapay' ),
-				$transaction_code
-			)
+		$result = monapay_complete_order_payment(
+			$order,
+			$transaction_code,
+			$payload['amount'],
+			isset( $settings['autocomplete_orders'] ) && 'yes' === $settings['autocomplete_orders']
 		);
-
-		if ( isset( $settings['autocomplete_orders'] ) && 'yes' === $settings['autocomplete_orders'] && ! $order->has_status( 'completed' ) ) {
-			$order->update_status( 'completed', __( 'MONA Pay tự động hoàn tất đơn theo cấu hình.', 'woocommerce-monapay' ) );
-		}
-
-		$this->log(
-			'info',
-			'Đã xác nhận thanh toán đơn hàng.',
-			array(
-				'order_id'         => $order->get_id(),
-				'transaction_code' => $transaction_code,
-			)
-		);
-
-		return $this->response( 200, true, 'Đã xác nhận thanh toán.' );
+		return $this->payment_result_response( $result, $order, $transaction_code, 'TRANSACTION_IN' );
 	}
 
-	/**
-	 * Find a MONA Pay order by DH{id} first, then by its generated VA number.
-	 *
-	 * @param array $payload Validated webhook payload.
-	 * @return WC_Order|false
-	 */
-	private function find_order( $payload ) {
+	/** Convert the shared payment result to logging and an HTTP response. */
+	private function payment_result_response( $result, $order, $transaction_code, $event ) {
+		$context = array(
+			'order_id'         => $order->get_id(),
+			'transaction_code' => $transaction_code,
+			'event'            => $event,
+		);
+		if ( 'duplicate' === $result ) {
+			$this->log( 'info', 'Bỏ qua webhook trùng.', $context );
+			return $this->response( 200, true, 'Giao dịch đã được xử lý.' );
+		}
+		if ( 'underpaid' === $result ) {
+			$this->log( 'warning', 'Webhook có số tiền thấp hơn tổng đơn.', $context );
+			return $this->response( 200, true, 'Đã nhận webhook; số tiền chưa đủ.' );
+		}
+		if ( 'completed' === $result ) {
+			$this->log( 'info', 'Đã xác nhận thanh toán đơn hàng.', $context );
+			return $this->response( 200, true, 'Đã xác nhận thanh toán.' );
+		}
+
+		$this->log( 'warning', 'Webhook có dữ liệu thanh toán không hợp lệ.', $context );
+		return $this->response( 400, false, 'Giao dịch không hợp lệ.' );
+	}
+
+	/** Find a redirect order by its exact DH{id} and optional checkout UUID. */
+	private function find_checkout_order( $order_code, $checkout_id ) {
+		if ( ! preg_match( '/^DH([1-9][0-9]*)$/', $order_code, $matches ) ) {
+			return false;
+		}
+
+		$order = wc_get_order( (int) $matches[1] );
+		if ( ! $order || 'monapay_vietqr' !== $order->get_payment_method() ) {
+			return false;
+		}
+
+		$stored_checkout_id = (string) $order->get_meta( '_monapay_checkout_id', true );
+		if ( '' === $stored_checkout_id ) {
+			return false;
+		}
+		if ( '' !== $checkout_id && ! hash_equals( $stored_checkout_id, $checkout_id ) ) {
+			return false;
+		}
+
+		return $order;
+	}
+
+	/** Find a MONA Pay order by DH{id} first, then by its generated VA number. */
+	private function find_transaction_order( $payload ) {
 		$order_id = monapay_parse_order_id( (string) $payload['description'] );
 		if ( $order_id ) {
 			$order = wc_get_order( $order_id );

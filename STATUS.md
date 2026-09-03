@@ -1,28 +1,31 @@
-# STATUS: WooCommerce MONA Pay 0.2.0
+# STATUS: WooCommerce MONA Pay 0.3.0
 
 ## Trạng thái
 
-Đã triển khai brief 0.2.0 trong working tree. Chưa commit, push hoặc nộp WordPress.org.
+Đã triển khai brief 0.3.0 trong working tree. Chưa commit hoặc push.
 
 ## Hoàn tất
 
-- OAuth client credentials qua `/api/v1/oauth/token`, cache theo `expires_in`, làm mới một lần khi HTTP 401 và giữ fallback ẩn username/password của 0.1.0.
-- Cài đặt Client ID/Client Secret, công cụ bắn webhook thử và tạo giao dịch sandbox 10.000 VND theo số VA đầy đủ.
-- Dòng nhận diện MONA Pay tùy chọn dưới QR ở thank-you/view-order, mặc định bật theo brief.
-- `readme.txt` bản 0.2.0 với External services, Installation, FAQ, Screenshots và Changelog; plugin header có `Requires Plugins: woocommerce`.
-- Bộ banner, icon và bốn screenshot mockup trong `assets/wporg/`.
-- `tests/test-oauth.php`, POT cập nhật, workflow CI mở rộng và `build-zip.sh`.
-- ZIP phát hành tại `dist/woocommerce-monapay-0.2.0.zip`, không chứa test, wporg assets, Git, status, report hay script build.
+- Hai chế độ thanh toán: hosted checkout `redirect` mặc định cho cài mới và VietQR `inline` tương thích 0.2.0.
+- Tự chuyển cấu hình cũ chưa có `payment_mode` sang `inline` để không đổi hành vi khi nâng cấp.
+- Tạo checkout qua `POST /api/v1/checkouts`, Idempotency-Key `wc-<order_id>-<attempt>`, lưu id/token/url, giữ đơn `pending` và chuyển khách sang `checkout_url`.
+- Endpoint `woocommerce_api_monapay_return` xác minh HMAC-SHA256 trong 10 phút, đối chiếu `GET /api/v1/checkouts/{id}`, số tiền và mã đơn trước `payment_complete()`.
+- Huỷ hosted checkout không huỷ đơn WooCommerce; plugin giữ đơn chờ và hiện thông báo “Chưa thanh toán”.
+- Webhook nhận `CHECKOUT_PAID` và `TRANSACTION_IN`, dùng chung hàm kiểm tiền và chống trùng `_monapay_txn_codes`.
+- Thank-you, view-order và email hiển thị trạng thái cùng nút mở lại trang thanh toán khi đơn còn chờ.
+- Version, readme, POT, test chữ ký return, test API và script build đã lên 0.3.0.
+- ZIP phát hành: `dist/woocommerce-monapay-0.3.0.zip`.
 
 ## Gate tại máy hiện tại
 
-- `node --check assets/js/admin-settings.js`: PASS.
 - `sh -n build-zip.sh`: PASS.
+- `node --check assets/js/admin-settings.js`: PASS.
+- Parse YAML workflow bằng Ruby: PASS.
 - `msgfmt --check --check-format`: PASS, chỉ có warning placeholder chuẩn của POT.
+- Quét cân bằng delimiter PHP cho 12 file: PASS.
 - `git diff --check`: PASS.
-- Kích thước 8 PNG WordPress.org: PASS.
-- Kiểm tra nội dung ZIP và danh sách loại trừ: PASS.
-- PHP lint và ba test PHP: chưa chạy vì máy không có PHP CLI. CI đã được cấu hình chạy đủ.
-- Chrome/Chromium headless: môi trường macOS sandbox từ chối Mach port. Bốn PNG mockup được dựng từ cùng layout bằng Pillow; cần thay bằng ảnh store thật trước khi nộp nếu có staging.
+- Kiểm tra version/readme/POT: PASS.
+- Kiểm tra nội dung và danh sách loại trừ ZIP: PASS.
+- PHP lint và test PHP chưa chạy cục bộ vì máy không có PHP CLI; workflow CI đã chạy các lệnh này khi có PHP 8.2.
 
-Chi tiết và lệnh xác minh nằm trong `REPORT-WOO-PLUGIN-0.2.0.md`.
+Chi tiết nằm trong `REPORT-WOO-PLUGIN-0.3.0.md`.

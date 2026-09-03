@@ -49,6 +49,34 @@ class MonaPay_API {
 	}
 
 	/**
+	 * Create a hosted MONA Pay checkout.
+	 *
+	 * @param array  $payload         Checkout API payload.
+	 * @param string $idempotency_key Stable key for this creation attempt.
+	 * @return array
+	 * @throws Exception When MONA Pay rejects the request.
+	 */
+	public function create_checkout( $payload, $idempotency_key ) {
+		return $this->request( 'POST', '/api/v1/checkouts', $payload, $idempotency_key );
+	}
+
+	/**
+	 * Fetch a hosted checkout owned by the configured client.
+	 *
+	 * @param string $checkout_id Checkout UUID.
+	 * @return array
+	 * @throws Exception When MONA Pay rejects the request.
+	 */
+	public function get_checkout( $checkout_id ) {
+		$checkout_id = trim( (string) $checkout_id );
+		if ( '' === $checkout_id ) {
+			throw new Exception( __( 'Mã phiên thanh toán MONA Pay không hợp lệ.', 'woocommerce-monapay' ) );
+		}
+
+		return $this->request( 'GET', '/api/v1/checkouts/' . rawurlencode( $checkout_id ), null );
+	}
+
+	/**
 	 * Ask MONA Pay to send a signed dummy webhook to this store.
 	 *
 	 * @param string $webhook_url Public store webhook URL.
@@ -94,32 +122,44 @@ class MonaPay_API {
 	/**
 	 * Perform an authenticated API request.
 	 *
-	 * @param string $method HTTP method.
-	 * @param string $path   API path.
-	 * @param array  $body   JSON request body.
-	 * @param bool   $retry  Whether a single 401 token refresh is allowed.
+	 * @param string     $method          HTTP method.
+	 * @param string     $path            API path.
+	 * @param array|null $body            JSON request body, or null for no body.
+	 * @param string     $idempotency_key Optional request idempotency key.
+	 * @param bool       $retry           Whether a single 401 token refresh is allowed.
 	 * @return array
 	 * @throws Exception For transport, authentication, or API errors.
 	 */
-	private function request( $method, $path, $body, $retry = true ) {
+	private function request( $method, $path, $body = null, $idempotency_key = '', $retry = true ) {
 		$this->assert_configured();
 		$token = $this->get_access_token();
+		$method = strtoupper( (string) $method );
+		$headers = array(
+			'Accept'        => 'application/json',
+			'Authorization' => 'Bearer ' . $token,
+		);
+		if ( 'GET' !== $method ) {
+			$headers['Content-Type']    = 'application/json';
+			$headers['X-Client-Secret'] = $this->client_secret;
+		}
+		if ( '' !== $idempotency_key ) {
+			$headers['Idempotency-Key'] = $idempotency_key;
+		}
+
+		$args = array(
+			'method'      => $method,
+			'timeout'     => 20,
+			'redirection' => 2,
+			'sslverify'   => true,
+			'headers'     => $headers,
+		);
+		if ( null !== $body ) {
+			$args['body'] = wp_json_encode( $body );
+		}
 
 		$response = wp_remote_request(
 			$this->base_url . $path,
-			array(
-				'method'      => $method,
-				'timeout'     => 20,
-				'redirection' => 2,
-				'sslverify'   => true,
-				'headers'     => array(
-					'Accept'          => 'application/json',
-					'Content-Type'    => 'application/json',
-					'Authorization'   => 'Bearer ' . $token,
-					'X-Client-Secret' => $this->client_secret,
-				),
-				'body'        => wp_json_encode( $body ),
-			)
+			$args
 		);
 
 		if ( is_wp_error( $response ) ) {
@@ -137,7 +177,7 @@ class MonaPay_API {
 
 		if ( 401 === $status && $retry ) {
 			delete_transient( $this->token_cache_key() );
-			return $this->request( $method, $path, $body, false );
+			return $this->request( $method, $path, $body, $idempotency_key, false );
 		}
 
 		if ( $status < 200 || $status >= 300 || ! is_array( $json ) || ( isset( $json['success'] ) && false === $json['success'] ) ) {
@@ -214,7 +254,7 @@ class MonaPay_API {
 	}
 
 	/**
-	 * Ensure all credentials required by write endpoints are available.
+	 * Ensure all credentials required by authenticated endpoints are available.
 	 *
 	 * @throws Exception When gateway credentials are incomplete.
 	 */

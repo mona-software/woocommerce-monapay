@@ -1,0 +1,174 @@
+<?php
+/**
+ * Hosted checkout return and cancellation handlers.
+ *
+ * @package MonaPay_WooCommerce
+ */
+
+defined( 'ABSPATH' ) || exit;
+
+class MonaPay_Return {
+	/** Register the WooCommerce API return endpoint and checkout cancel notice. */
+	public function __construct() {
+		add_action( 'woocommerce_api_monapay_return', array( $this, 'handle' ) );
+		add_action( 'template_redirect', array( $this, 'maybe_handle_cancel' ), 5 );
+	}
+
+	/** Handle a signed paid return or an unsigned cancelled return. */
+	public function handle() {
+		$checkout_id = isset( $_GET['monapay_checkout'] ) ? sanitize_text_field( wp_unslash( $_GET['monapay_checkout'] ) ) : '';
+		$order_code  = isset( $_GET['order_code'] ) ? sanitize_text_field( wp_unslash( $_GET['order_code'] ) ) : '';
+		$status      = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
+		$timestamp   = isset( $_GET['ts'] ) ? sanitize_text_field( wp_unslash( $_GET['ts'] ) ) : '';
+		$signature   = isset( $_GET['sig'] ) ? sanitize_text_field( wp_unslash( $_GET['sig'] ) ) : '';
+
+		if ( 'cancelled' === $status ) {
+			$this->mark_cancelled( $checkout_id );
+			$this->redirect_to_checkout( __( 'Chưa thanh toán.', 'woocommerce-monapay' ), 'notice' );
+		}
+
+		$order    = $this->find_paid_return_order( $checkout_id, $order_code );
+		$settings = get_option( 'woocommerce_monapay_vietqr_settings', array() );
+		$secret   = is_array( $settings ) && isset( $settings['return_signature_secret'] ) ? (string) $settings['return_signature_secret'] : '';
+		if ( ! $order || ! monapay_verify_return_signature( $checkout_id, $order_code, $status, $timestamp, $signature, $secret ) ) {
+			$this->log( 'warning', 'Redirect checkout có chữ ký hoặc dữ liệu không hợp lệ.', array( 'checkout_id' => $checkout_id ) );
+			$this->redirect_to_checkout( __( 'Liên kết xác nhận thanh toán không hợp lệ. Vui lòng thử lại.', 'woocommerce-monapay' ), 'error' );
+		}
+
+		try {
+			$api      = new MonaPay_API( $this->api_settings( $settings ) );
+			$checkout = $api->get_checkout( $checkout_id );
+			$is_paid  = isset( $checkout['status'], $checkout['order_code'], $checkout['paid_amount'], $checkout['transaction_code'] )
+				&& 'paid' === (string) $checkout['status']
+				&& $order_code === (string) $checkout['order_code']
+				&& is_numeric( $checkout['paid_amount'] )
+				&& '' !== (string) $checkout['transaction_code'];
+
+			if ( $is_paid ) {
+				$result = monapay_complete_order_payment(
+					$order,
+					(string) $checkout['transaction_code'],
+					$checkout['paid_amount'],
+					isset( $settings['autocomplete_orders'] ) && 'yes' === $settings['autocomplete_orders']
+				);
+				if ( in_array( $result, array( 'completed', 'duplicate' ), true ) ) {
+					$this->log( 'info', 'Đã đối chiếu redirect và xác nhận thanh toán.', array( 'order_id' => $order->get_id(), 'checkout_id' => $checkout_id ) );
+					$this->redirect_to_order( $order );
+				}
+			}
+		} catch ( Exception $exception ) {
+			$this->log( 'error', $exception->getMessage(), array( 'order_id' => $order->get_id(), 'checkout_id' => $checkout_id ) );
+		}
+
+		$this->redirect_to_order( $order, __( 'Thanh toán đang chờ xác nhận.', 'woocommerce-monapay' ) );
+	}
+
+	/** Show the cancellation notice when MONA Pay redirects directly to checkout. */
+	public function maybe_handle_cancel() {
+		if ( ! function_exists( 'is_checkout' ) || ! is_checkout() ) {
+			return;
+		}
+
+		$status      = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
+		$checkout_id = isset( $_GET['monapay_checkout'] ) ? sanitize_text_field( wp_unslash( $_GET['monapay_checkout'] ) ) : '';
+		if ( 'cancelled' !== $status || '' === $checkout_id || ! $this->mark_cancelled( $checkout_id ) ) {
+			return;
+		}
+
+		if ( ! wc_has_notice( __( 'Chưa thanh toán.', 'woocommerce-monapay' ), 'notice' ) ) {
+			wc_add_notice( __( 'Chưa thanh toán.', 'woocommerce-monapay' ), 'notice' );
+		}
+	}
+
+	/** Find and mark a redirect order as cancelled without cancelling the order. */
+	private function mark_cancelled( $checkout_id ) {
+		$order = $this->find_order_by_checkout_id( $checkout_id );
+		if ( ! $order || $order->is_paid() || 'redirect' !== (string) $order->get_meta( '_monapay_payment_mode', true ) ) {
+			return false;
+		}
+
+		$order->update_meta_data( '_monapay_checkout_status', 'cancelled' );
+		$order->save();
+		return true;
+	}
+
+	/** Resolve a paid return to its exact WooCommerce order. */
+	private function find_paid_return_order( $checkout_id, $order_code ) {
+		if ( '' === $checkout_id || ! preg_match( '/^DH([1-9][0-9]*)$/', $order_code, $matches ) ) {
+			return false;
+		}
+
+		$order = wc_get_order( (int) $matches[1] );
+		if ( ! $order || 'monapay_vietqr' !== $order->get_payment_method() ) {
+			return false;
+		}
+
+		$stored_checkout_id = (string) $order->get_meta( '_monapay_checkout_id', true );
+		return '' !== $stored_checkout_id && hash_equals( $stored_checkout_id, $checkout_id ) ? $order : false;
+	}
+
+	/** Find an order from an unsigned cancellation's unguessable checkout UUID. */
+	private function find_order_by_checkout_id( $checkout_id ) {
+		if ( '' === $checkout_id ) {
+			return false;
+		}
+
+		$orders = wc_get_orders(
+			array(
+				'limit'      => 1,
+				'return'     => 'objects',
+				'type'       => 'shop_order',
+				'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query -- Exact lookup for a single checkout return.
+					array(
+						'key'     => '_monapay_checkout_id',
+						'value'   => $checkout_id,
+						'compare' => '=',
+					),
+				),
+			)
+		);
+
+		if ( empty( $orders ) || 'monapay_vietqr' !== $orders[0]->get_payment_method() ) {
+			return false;
+		}
+
+		return $orders[0];
+	}
+
+	/** Build API settings from the gateway option without exposing secrets. */
+	private function api_settings( $settings ) {
+		$settings = is_array( $settings ) ? $settings : array();
+		return array(
+			'base_url'      => isset( $settings['base_url'] ) ? (string) $settings['base_url'] : 'https://api.monapay.vn',
+			'client_id'     => isset( $settings['client_id'] ) ? (string) $settings['client_id'] : '',
+			'username'      => isset( $settings['username'] ) ? (string) $settings['username'] : '',
+			'password'      => isset( $settings['password'] ) ? (string) $settings['password'] : '',
+			'client_secret' => isset( $settings['client_secret'] ) ? (string) $settings['client_secret'] : '',
+		);
+	}
+
+	/** Redirect back to the shop checkout with a WooCommerce notice. */
+	private function redirect_to_checkout( $message, $type ) {
+		wc_add_notice( $message, $type );
+		wp_safe_redirect( wc_get_checkout_url() );
+		exit;
+	}
+
+	/** Redirect to the order received page, optionally with a notice. */
+	private function redirect_to_order( $order, $message = '' ) {
+		if ( '' !== $message ) {
+			wc_add_notice( $message, 'notice' );
+		}
+		wp_safe_redirect( $order->get_checkout_order_received_url() );
+		exit;
+	}
+
+	/** Write a structured entry to the WooCommerce logger. */
+	private function log( $level, $message, $context = array() ) {
+		if ( ! function_exists( 'wc_get_logger' ) ) {
+			return;
+		}
+		$context['source'] = 'woocommerce-monapay';
+		wc_get_logger()->log( $level, $message, $context );
+	}
+}

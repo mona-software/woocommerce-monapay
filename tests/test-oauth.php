@@ -146,6 +146,19 @@ $sandbox_body = json_decode( $monapay_mock_api_calls[2]['args']['body'], true );
 monapay_oauth_assert( 'https://api.monapay.vn/api/v1/sandbox/transactions' === $monapay_mock_api_calls[2]['url'], 'sandbox dùng đúng endpoint' );
 monapay_oauth_assert( 'VA00001234' === $sandbox_body['virtual_account_number'] && 10000 === $sandbox_body['amount'], 'sandbox gửi đúng VA và 10.000 VND' );
 
+$monapay_mock_api_responses[] = monapay_mock_response( 201, array( 'id' => 'checkout-1', 'checkout_url' => 'https://pay.monapay.vn/c/token-1' ) );
+$client->create_checkout( array( 'amount' => 250000, 'order_code' => 'DH123' ), 'wc-123-1' );
+$checkout_body = json_decode( $monapay_mock_api_calls[3]['args']['body'], true );
+monapay_oauth_assert( 'https://api.monapay.vn/api/v1/checkouts' === $monapay_mock_api_calls[3]['url'], 'hosted checkout dùng đúng endpoint' );
+monapay_oauth_assert( 'wc-123-1' === $monapay_mock_api_calls[3]['args']['headers']['Idempotency-Key'], 'hosted checkout gửi Idempotency-Key' );
+monapay_oauth_assert( 250000 === $checkout_body['amount'] && 'DH123' === $checkout_body['order_code'], 'hosted checkout giữ đúng payload' );
+
+$monapay_mock_api_responses[] = monapay_mock_response( 200, array( 'id' => 'checkout-1', 'status' => 'paid' ) );
+$client->get_checkout( 'checkout-1' );
+monapay_oauth_assert( 'https://api.monapay.vn/api/v1/checkouts/checkout-1' === $monapay_mock_api_calls[4]['url'], 'đối chiếu checkout dùng đúng endpoint GET' );
+monapay_oauth_assert( 'GET' === $monapay_mock_api_calls[4]['args']['method'] && ! isset( $monapay_mock_api_calls[4]['args']['body'] ), 'GET checkout không gửi JSON body' );
+monapay_oauth_assert( ! isset( $monapay_mock_api_calls[4]['args']['headers']['X-Client-Secret'] ), 'GET checkout chỉ dùng Bearer token' );
+
 monapay_reset_mocks();
 $monapay_mock_auth_responses[] = monapay_mock_response( 200, array( 'access_token' => 'expired-token', 'expires_in' => 3600 ) );
 $monapay_mock_auth_responses[] = monapay_mock_response( 200, array( 'access_token' => 'fresh-token', 'expires_in' => 3600 ) );

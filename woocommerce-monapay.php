@@ -2,8 +2,8 @@
 /**
  * Plugin Name:       MONA Pay for WooCommerce
  * Plugin URI:        https://monapay.vn/
- * Description:       Nhận thanh toán chuyển khoản VietQR và tự động xác nhận đơn hàng qua MONA Pay.
- * Version:           0.2.0
+ * Description:       Nhận thanh toán qua trang MONA Pay hoặc VietQR tại cửa hàng và tự động xác nhận đơn WooCommerce.
+ * Version:           0.3.0
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Requires Plugins:  woocommerce
@@ -21,7 +21,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MONAPAY_WC_VERSION', '0.2.0' );
+define( 'MONAPAY_WC_VERSION', '0.3.0' );
 define( 'MONAPAY_WC_FILE', __FILE__ );
 define( 'MONAPAY_WC_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MONAPAY_WC_URL', plugin_dir_url( __FILE__ ) );
@@ -66,14 +66,27 @@ function monapay_init() {
 	require_once MONAPAY_WC_PATH . 'includes/class-monapay-qr-code.php';
 	require_once MONAPAY_WC_PATH . 'includes/class-monapay-qr-endpoint.php';
 	require_once MONAPAY_WC_PATH . 'includes/class-monapay-webhook.php';
+	require_once MONAPAY_WC_PATH . 'includes/class-monapay-return.php';
 	require_once MONAPAY_WC_PATH . 'includes/class-wc-gateway-monapay.php';
 
+	monapay_upgrade_030_settings();
 	$GLOBALS['monapay_qr_endpoint'] = new MonaPay_QR_Endpoint();
 	$GLOBALS['monapay_webhook']     = new MonaPay_Webhook();
+	$GLOBALS['monapay_return']      = new MonaPay_Return();
 	add_action( 'wp_ajax_monapay_test_webhook', 'monapay_handle_test_webhook' );
 	add_action( 'wp_ajax_monapay_test_sandbox', 'monapay_handle_test_sandbox' );
 }
 add_action( 'plugins_loaded', 'monapay_init', 20 );
+
+/** Preserve the 0.2.0 inline behavior on configured stores during upgrade. */
+function monapay_upgrade_030_settings() {
+	$option   = 'woocommerce_monapay_vietqr_settings';
+	$settings = get_option( $option, false );
+	if ( is_array( $settings ) && ! empty( $settings ) && ! array_key_exists( 'payment_mode', $settings ) ) {
+		$settings['payment_mode'] = 'inline';
+		update_option( $option, $settings );
+	}
+}
 
 /**
  * Resolve the gateway explicitly for admin-ajax requests and send a test.
