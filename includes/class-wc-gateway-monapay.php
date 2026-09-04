@@ -28,6 +28,9 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 		add_action( 'woocommerce_email_after_order_table', array( $this, 'email_instructions' ), 20, 4 );
 		add_action( 'woocommerce_view_order', array( $this, 'view_order_instructions' ), 20 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
+		add_action( 'admin_notices', array( $this, 'admin_sandbox_notice' ) );
+		add_filter( 'woocommerce_order_actions', array( $this, 'add_sandbox_order_action' ), 10, 2 );
+		add_action( 'woocommerce_order_action_monapay_create_sandbox_transaction', array( $this, 'create_order_sandbox_transaction' ) );
 	}
 
 	/** Define settings shown under WooCommerce > Payments. */
@@ -61,6 +64,13 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 					'redirect' => __( 'Chuyển sang trang thanh toán MONA Pay', 'woocommerce-monapay' ),
 					'inline'   => __( 'Hiện QR tại cửa hàng', 'woocommerce-monapay' ),
 				),
+			),
+			'sandbox_mode'           => array(
+				'title'       => __( 'Chế độ thử (sandbox)', 'woocommerce-monapay' ),
+				'type'        => 'checkbox',
+				'label'       => __( 'Không chuyển tiền thật, dùng khi chưa nối ngân hàng', 'woocommerce-monapay' ),
+				'default'     => 'no',
+				'description' => __( 'Phiên thanh toán thử chỉ dành cho kiểm tra tích hợp. Phải tắt chế độ sandbox trước khi bán thật.', 'woocommerce-monapay' ),
 			),
 			'api_heading'            => array(
 				'title'       => __( 'Kết nối MONA Pay', 'woocommerce-monapay' ),
@@ -245,9 +255,12 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 			return null;
 		}
 
-		$checkout_url    = (string) $order->get_meta( '_monapay_checkout_url', true );
-		$checkout_status = (string) $order->get_meta( '_monapay_checkout_status', true );
-		if ( '' !== $checkout_url && ! in_array( $checkout_status, array( 'cancelled', 'expired' ), true ) ) {
+		$checkout_url      = (string) $order->get_meta( '_monapay_checkout_url', true );
+		$checkout_status   = (string) $order->get_meta( '_monapay_checkout_status', true );
+		$current_sandbox   = $this->is_sandbox_enabled();
+		$checkout_sandbox  = 'yes' === (string) $order->get_meta( '_monapay_sandbox', true );
+		$sandbox_changed   = '' !== $checkout_url && $current_sandbox !== $checkout_sandbox;
+		if ( '' !== $checkout_url && ! $sandbox_changed && ! in_array( $checkout_status, array( 'cancelled', 'expired' ), true ) ) {
 			$order->update_meta_data( '_monapay_payment_mode', 'redirect' );
 			$order->save();
 			wc_reduce_stock_levels( $order->get_id() );
@@ -256,11 +269,12 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 		}
 
 		$attempt = max( 1, (int) $order->get_meta( '_monapay_checkout_attempt', true ) );
-		if ( in_array( $checkout_status, array( 'cancelled', 'expired' ), true ) ) {
+		if ( $sandbox_changed || in_array( $checkout_status, array( 'cancelled', 'expired' ), true ) ) {
 			$attempt++;
 			$order->delete_meta_data( '_monapay_checkout_id' );
 			$order->delete_meta_data( '_monapay_checkout_token' );
 			$order->delete_meta_data( '_monapay_checkout_url' );
+			$order->delete_meta_data( '_monapay_virtual_account_number' );
 		}
 		$order->update_meta_data( '_monapay_checkout_attempt', $attempt );
 		$order->update_meta_data( '_monapay_checkout_status', 'creating' );
@@ -283,6 +297,7 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 		if ( '' !== $payer_name ) {
 			$payload['payer_name'] = $payer_name;
 		}
+		$payload = monapay_prepare_checkout_payload( $payload, $current_sandbox ? 'yes' : 'no' );
 
 		try {
 			$api  = new MonaPay_API( $this->get_api_settings() );
@@ -298,6 +313,10 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 			$order->update_meta_data( '_monapay_checkout_status', 'pending' );
 			$order->update_meta_data( '_monapay_order_id', (string) $order->get_id() );
 			$order->update_meta_data( '_monapay_payment_mode', 'redirect' );
+			if ( ! empty( $data['virtual_account_number'] ) ) {
+				$order->update_meta_data( '_monapay_virtual_account_number', sanitize_text_field( (string) $data['virtual_account_number'] ) );
+			}
+			$this->mark_order_sandbox_mode( $order, $current_sandbox );
 			$order->save();
 
 			if ( ! $order->has_status( 'pending' ) ) {
@@ -352,6 +371,7 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 				if ( ! empty( $data['virtual_account_number'] ) ) {
 					$order->update_meta_data( '_monapay_virtual_account_number', sanitize_text_field( (string) $data['virtual_account_number'] ) );
 				}
+				$this->mark_order_sandbox_mode( $order, $this->is_sandbox_enabled() );
 				$order->save();
 				wc_reduce_stock_levels( $order_id );
 			} catch ( Exception $exception ) {
@@ -408,6 +428,9 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 		}
 
 		if ( $plain_text ) {
+			if ( $this->is_order_sandbox( $order ) ) {
+				echo "\n" . esc_html__( 'Đơn thử nghiệm (sandbox), không chuyển tiền thật', 'woocommerce-monapay' ) . "\n";
+			}
 			if ( 'redirect' === $this->get_order_payment_mode( $order ) ) {
 				echo "\n" . esc_html__( 'THANH TOÁN MONA PAY', 'woocommerce-monapay' ) . "\n";
 				echo esc_html__( 'Mở trang thanh toán:', 'woocommerce-monapay' ) . ' ' . esc_url_raw( (string) $order->get_meta( '_monapay_checkout_url', true ) ) . "\n\n";
@@ -445,6 +468,7 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 		?>
 		<section class="woocommerce-monapay-payment" style="<?php echo esc_attr( $style ); ?>">
 			<h2><?php esc_html_e( 'Quét VietQR để thanh toán', 'woocommerce-monapay' ); ?></h2>
+			<?php $this->render_sandbox_warning( $order ); ?>
 			<p><?php esc_html_e( 'Quý khách vui lòng kiểm tra thông tin thanh toán trước khi thực hiện giao dịch.', 'woocommerce-monapay' ); ?></p>
 			<p style="font-size:24px;font-weight:700;margin:12px 0;"><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></p>
 			<p><img src="<?php echo esc_url( $qr_url ); ?>" width="320" height="320" alt="<?php esc_attr_e( 'Mã VietQR thanh toán đơn hàng', 'woocommerce-monapay' ); ?>" style="display:block;max-width:100%;height:auto;margin:16px auto;" /></p>
@@ -478,6 +502,7 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 		?>
 		<section class="woocommerce-monapay-payment" style="<?php echo esc_attr( $style ); ?>">
 			<h2><?php esc_html_e( 'Thanh toán MONA Pay', 'woocommerce-monapay' ); ?></h2>
+			<?php $this->render_sandbox_warning( $order ); ?>
 			<p><strong><?php esc_html_e( 'Trạng thái:', 'woocommerce-monapay' ); ?></strong> <?php echo esc_html( $status_text ); ?></p>
 			<p style="font-size:24px;font-weight:700;margin:12px 0;"><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></p>
 			<?php if ( $is_pending && '' !== $checkout_url ) : ?>
@@ -494,6 +519,36 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 	private function get_payment_mode() {
 		$mode = (string) $this->get_option( 'payment_mode', 'redirect' );
 		return 'inline' === $mode ? 'inline' : 'redirect';
+	}
+
+	/** Return whether new payments should use MONA Pay sandbox mode. */
+	private function is_sandbox_enabled() {
+		return 'yes' === (string) $this->get_option( 'sandbox_mode', 'no' );
+	}
+
+	/** Return whether an order was created while sandbox mode was enabled. */
+	private function is_order_sandbox( $order ) {
+		return 'yes' === (string) $order->get_meta( '_monapay_sandbox', true );
+	}
+
+	/** Persist the mode used for this order and add the sandbox audit note once. */
+	private function mark_order_sandbox_mode( $order, $is_sandbox ) {
+		$stored_mode = (string) $order->get_meta( '_monapay_sandbox', true );
+		$order->update_meta_data( '_monapay_sandbox', $is_sandbox ? 'yes' : 'no' );
+
+		if ( $is_sandbox && 'yes' !== $stored_mode ) {
+			$order->add_order_note( __( '[Sandbox] Đơn thử nghiệm, không chuyển tiền thật.', 'woocommerce-monapay' ) );
+		}
+	}
+
+	/** Render the order-scoped sandbox warning in either payment presentation. */
+	private function render_sandbox_warning( $order ) {
+		if ( ! $this->is_order_sandbox( $order ) ) {
+			return;
+		}
+		?>
+		<p style="background:#fff3cd;border:1px solid #ffecb5;color:#664d03;padding:10px 12px;margin:12px 0;"><strong><?php esc_html_e( 'Đơn thử nghiệm (sandbox), không chuyển tiền thật', 'woocommerce-monapay' ); ?></strong></p>
+		<?php
 	}
 
 	/** Resolve the mode stored on an order, with a fallback for 0.2.0 orders. */
@@ -657,12 +712,117 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 		return ob_get_clean();
 	}
 
-	/** Load admin-only JavaScript on this gateway's settings screen. */
-	public function enqueue_admin_assets() {
+	/** Warn administrators on this gateway's settings screen while sandbox is active. */
+	public function admin_sandbox_notice() {
+		if ( ! $this->is_sandbox_enabled() || ! $this->is_gateway_settings_screen() ) {
+			return;
+		}
+		?>
+		<div class="notice notice-warning inline">
+			<p><strong><?php esc_html_e( 'MONA Pay đang bật chế độ thử (sandbox).', 'woocommerce-monapay' ); ?></strong> <?php esc_html_e( 'Không có tiền thật được chuyển; hãy tắt chế độ này trước khi bán thật.', 'woocommerce-monapay' ); ?></p>
+		</div>
+		<?php
+	}
+
+	/** Add an order action for simulating payment of an unpaid sandbox order. */
+	public function add_sandbox_order_action( $actions, $order ) {
+		if ( $this->can_create_order_sandbox_transaction( $order ) ) {
+			$actions['monapay_create_sandbox_transaction'] = __( 'MONA Pay: Tạo giao dịch thử (sandbox)', 'woocommerce-monapay' );
+		}
+
+		return $actions;
+	}
+
+	/** Request a full-value sandbox transaction for an order and wait for its webhook. */
+	public function create_order_sandbox_transaction( $order ) {
+		if ( ! current_user_can( 'manage_woocommerce' ) || ! $this->can_create_order_sandbox_transaction( $order ) ) {
+			return;
+		}
+
+		$amount          = (int) round( (float) $order->get_total() );
+		$virtual_account = $this->get_order_sandbox_virtual_account( $order );
+		if ( '' === $virtual_account ) {
+			$order->add_order_note( __( '[Sandbox] Chưa thể tạo giao dịch thử: checkout và cài đặt chưa có số tài khoản ảo.', 'woocommerce-monapay' ) );
+			return;
+		}
+
+		try {
+			$api  = new MonaPay_API( $this->get_api_settings() );
+			$data = $api->create_sandbox_transaction( $virtual_account, $amount, 'DH' . $order->get_id() );
+			$code = isset( $data['transaction_code'] ) ? sanitize_text_field( (string) $data['transaction_code'] ) : '';
+			$note = '' !== $code
+				? sprintf(
+					/* translators: %s: sandbox transaction code. */
+					__( '[Sandbox] Đã tạo giao dịch thử cho đơn này. Mã giao dịch: %s. Đang chờ webhook xác nhận.', 'woocommerce-monapay' ),
+					$code
+				)
+				: __( '[Sandbox] Đã tạo giao dịch thử cho đơn này. Đang chờ webhook xác nhận.', 'woocommerce-monapay' );
+			$order->add_order_note( $note );
+		} catch ( Exception $exception ) {
+			$this->log( 'error', $exception->getMessage(), array( 'order_id' => $order->get_id(), 'operation' => 'order_sandbox_transaction' ) );
+			$order->add_order_note(
+				sprintf(
+					/* translators: %s: MONA Pay API error. */
+					__( '[Sandbox] Không thể tạo giao dịch thử: %s', 'woocommerce-monapay' ),
+					sanitize_text_field( $exception->getMessage() )
+				)
+			);
+		}
+	}
+
+	/** Check all invariants before exposing or running the sandbox order action. */
+	private function can_create_order_sandbox_transaction( $order ) {
+		if ( ! is_object( $order ) || ! method_exists( $order, 'get_payment_method' ) ) {
+			return false;
+		}
+
+		$amount = (int) round( (float) $order->get_total() );
+		return $this->is_sandbox_enabled()
+			&& $this->is_order_sandbox( $order )
+			&& 'monapay_vietqr' === $order->get_payment_method()
+			&& ! $order->is_paid()
+			&& $order->has_status( array( 'pending', 'on-hold', 'failed' ) )
+			&& $amount > 0
+			&& $amount <= 1000000000;
+	}
+
+	/** Resolve the checkout VA first, then fall back to the configured test VA. */
+	private function get_order_sandbox_virtual_account( $order ) {
+		$virtual_account = trim( sanitize_text_field( (string) $order->get_meta( '_monapay_virtual_account_number', true ) ) );
+		$checkout_id     = trim( sanitize_text_field( (string) $order->get_meta( '_monapay_checkout_id', true ) ) );
+
+		if ( '' === $virtual_account && '' !== $checkout_id ) {
+			try {
+				$api      = new MonaPay_API( $this->get_api_settings() );
+				$checkout = $api->get_checkout( $checkout_id );
+				if ( ! empty( $checkout['virtual_account_number'] ) ) {
+					$virtual_account = trim( sanitize_text_field( (string) $checkout['virtual_account_number'] ) );
+					$order->update_meta_data( '_monapay_virtual_account_number', $virtual_account );
+					$order->save();
+				}
+			} catch ( Exception $exception ) {
+				$this->log( 'warning', $exception->getMessage(), array( 'order_id' => $order->get_id(), 'operation' => 'read_sandbox_checkout' ) );
+			}
+		}
+
+		if ( '' === $virtual_account ) {
+			$virtual_account = trim( sanitize_text_field( (string) $this->get_option( 'sandbox_virtual_account', '' ) ) );
+		}
+
+		return $virtual_account;
+	}
+
+	/** Return whether the current request is this gateway's settings page. */
+	private function is_gateway_settings_screen() {
 		$page    = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
 		$tab     = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '';
 		$section = isset( $_GET['section'] ) ? sanitize_key( wp_unslash( $_GET['section'] ) ) : '';
-		if ( 'wc-settings' !== $page || 'checkout' !== $tab || $this->id !== $section ) {
+		return 'wc-settings' === $page && 'checkout' === $tab && $this->id === $section;
+	}
+
+	/** Load admin-only JavaScript on this gateway's settings screen. */
+	public function enqueue_admin_assets() {
+		if ( ! $this->is_gateway_settings_screen() ) {
 			return;
 		}
 

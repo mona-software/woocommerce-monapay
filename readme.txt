@@ -3,7 +3,7 @@ Contributors: themonagroup
 Tags: monapay, vietqr, bank transfer, payment gateway, woocommerce
 Requires at least: 6.2
 Tested up to: 6.8
-Stable tag: 0.3.1
+Stable tag: 0.3.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -25,6 +25,8 @@ MONA Pay là API ngân hàng cho doanh nghiệp Việt Nam nhận và xác nhậ
 * Kiểm tra số tiền trước khi gọi `payment_complete()`.
 * Chống xử lý trùng bằng `transaction_code`.
 * Có nút bắn webhook thử và tạo giao dịch sandbox 10.000 VND trong cài đặt.
+* Có chế độ sandbox cho hosted checkout để thử toàn bộ luồng mà không cần nối ngân hàng và không chuyển tiền thật.
+* Đơn sandbox có cảnh báo riêng, ghi chú `[Sandbox]` và order action để quản trị viên tạo giao dịch thử đúng giá trị đơn.
 * Hỗ trợ WooCommerce High-Performance Order Storage (HPOS).
 
 Plugin dùng Client ID và Client Secret lấy tại my.monapay.vn, không cần lưu mật khẩu tài khoản MONA Pay. Khi nâng cấp từ 0.1.0, thông tin đăng nhập cũ tiếp tục hoạt động ở chế độ fallback ẩn cho tới khi anh chị lưu Client ID mới.
@@ -44,7 +46,17 @@ Tài liệu: https://monapay.vn/docs | Hotline: 1900 636 648 | Email: info@themo
 5. Vào WooCommerce > Cài đặt > Thanh toán > MONA Pay VietQR; chọn cách thanh toán, dán Client ID, Client Secret và Secret chữ ký quay về. Chế độ hiện QR cần thêm đầu số VA cùng các thông tin VietQR được cấp.
 6. Tạo Secret HMAC, lưu cài đặt, cấu hình URL webhook đang hiển thị trên MONA Pay rồi bấm “Bắn webhook thử”.
 
-Website phải dùng HTTPS công khai để MONA Pay gọi được webhook. Đồng hồ máy chủ cần chính xác để kiểm tra cửa sổ chữ ký 300 giây. Muốn thử luồng giao dịch không chuyển tiền thật, nhập số VA đầy đủ vào ô sandbox, lưu cài đặt rồi bấm “Tạo giao dịch thử (sandbox)”.
+Website phải dùng HTTPS công khai để MONA Pay gọi được webhook. Đồng hồ máy chủ cần chính xác để kiểm tra cửa sổ chữ ký 300 giây. Muốn dùng nút giao dịch thử cố định trong trang cài đặt, nhập số VA đầy đủ vào ô sandbox, lưu cài đặt rồi bấm “Tạo giao dịch thử (sandbox)”.
+
+== Thử trước khi nối ngân hàng ==
+
+1. Trong WooCommerce > Cài đặt > Thanh toán > MONA Pay VietQR, chọn “Chuyển sang trang thanh toán MONA Pay”.
+2. Bật “Chế độ thử (sandbox)”, lưu Client ID, Client Secret, Secret chữ ký quay về và Secret HMAC webhook. Cấu hình URL webhook như hướng dẫn trên màn hình.
+3. Đặt một đơn VND trên cửa hàng. Plugin gửi `sandbox: true` khi tạo hosted checkout; trang MONA Pay và trang đơn hàng đều cho biết đây là phiên thử, không chuyển tiền thật.
+4. Để giả lập thanh toán, mở đơn đang chờ trong quản trị WooCommerce, chọn “MONA Pay: Tạo giao dịch thử (sandbox)” ở khối Hành động đơn hàng rồi bấm áp dụng. Plugin dùng VA của checkout (hoặc “Số VA để thử sandbox” đã lưu), đúng tổng tiền và nội dung `DH{id}`; webhook xác nhận đơn như giao dịch thật.
+5. Phải tắt “Chế độ thử (sandbox)” trước khi bán thật. Plugin hiển thị cảnh báo tại trang cài đặt trong suốt thời gian chế độ thử đang bật.
+
+Nút “Tạo giao dịch thử (sandbox)” trong trang cài đặt vẫn tạo giao dịch cố định 10.000 VND cho số VA đã lưu. Chế độ “Hiện QR tại cửa hàng” tiếp tục dùng cấu hình VietQR/VA hiện có; hosted checkout là luồng được khuyến nghị để thử khi chưa nối ngân hàng.
 
 == Frequently Asked Questions ==
 
@@ -91,7 +103,7 @@ Vào WooCommerce > Trạng thái > Logs và chọn source `woocommerce-monapay`.
 
 Plugin kết nối tới dịch vụ MONA Pay tại `https://api.monapay.vn` khi quản trị viên cấu hình gateway và quý khách chọn thanh toán. Dịch vụ được dùng để cấp access token, tạo và đọc phiên hosted checkout, tạo VietQR, bắn webhook thử và tạo giao dịch sandbox theo yêu cầu của quản trị viên.
 
-Khi tạo hosted checkout, plugin gửi số tiền, mã đơn, mô tả, URL quay về, URL huỷ, email và tên thanh toán nếu có, cùng ID đơn WooCommerce trong metadata. Khi tạo VietQR, plugin gửi mã đơn, số tiền và thông tin tài khoản nhận do quản trị viên cấu hình. Khi dùng công cụ thử, plugin gửi URL webhook, cấu hình HMAC hoặc số VA sandbox tương ứng. Plugin không tự gửi dữ liệu phân tích, dữ liệu quảng cáo hay dữ liệu theo dõi.
+Khi tạo hosted checkout, plugin gửi số tiền, mã đơn, mô tả, URL quay về, URL huỷ, email và tên thanh toán nếu có, cùng ID đơn WooCommerce trong metadata; khi chế độ thử bật, plugin gửi thêm cờ `sandbox: true`. Khi tạo VietQR, plugin gửi mã đơn, số tiền và thông tin tài khoản nhận do quản trị viên cấu hình. Khi dùng công cụ thử, plugin gửi URL webhook, cấu hình HMAC hoặc số VA sandbox tương ứng. Order action sandbox gửi số VA, tổng tiền của đơn và nội dung `DH{id}`. Plugin không tự gửi dữ liệu phân tích, dữ liệu quảng cáo hay dữ liệu theo dõi.
 
 Chính sách bảo mật: https://monapay.vn/chinh-sach-bao-mat
 
@@ -99,9 +111,16 @@ Chính sách bảo mật: https://monapay.vn/chinh-sach-bao-mat
 
 == Privacy ==
 
-Plugin lưu ID, token, URL và trạng thái hosted checkout hoặc ID QR, chuỗi QR, số tài khoản ảo, cùng mã giao dịch đã xử lý trong meta riêng của đơn hàng. Client Secret, Secret chữ ký quay về và Secret HMAC webhook được lưu trong cài đặt WordPress của gateway, chỉ dùng phía máy chủ. Front-end và email không nhận các secret này. Plugin không có tracker và không tải tài nguyên từ CDN.
+Plugin lưu ID, token, URL và trạng thái hosted checkout hoặc ID QR, chuỗi QR, số tài khoản ảo, cờ đơn sandbox, cùng mã giao dịch đã xử lý trong meta riêng của đơn hàng. Client Secret, Secret chữ ký quay về và Secret HMAC webhook được lưu trong cài đặt WordPress của gateway, chỉ dùng phía máy chủ. Front-end và email không nhận các secret này. Plugin không có tracker và không tải tài nguyên từ CDN.
 
 == Changelog ==
+
+= 0.3.2 =
+
+* Thêm checkbox “Chế độ thử (sandbox)” mặc định tắt; hosted checkout gửi `sandbox: true` khi bật và bỏ hẳn trường này khi tắt.
+* Đánh dấu đơn sandbox bằng meta, ghi chú `[Sandbox]`, cảnh báo vàng ở giao diện thanh toán và cảnh báo tại trang cài đặt.
+* Thêm order action tạo giao dịch sandbox đúng tổng tiền cho đơn đang chờ rồi để webhook xác nhận như giao dịch thật.
+* Thêm kiểm thử payload sandbox/live cho hosted checkout.
 
 = 0.3.1 =
 

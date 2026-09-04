@@ -7,6 +7,29 @@
 
 defined( 'ABSPATH' ) || defined( 'MONAPAY_TESTING' ) || exit;
 
+if ( ! function_exists( 'monapay_prepare_checkout_payload' ) ) {
+	/**
+	 * Add the hosted-checkout sandbox flag only when the gateway setting is enabled.
+	 *
+	 * Omitting the key in live mode keeps the request compatible with the API's
+	 * production default and makes it impossible to send a truthy string by mistake.
+	 *
+	 * @param array  $payload      Hosted-checkout request body.
+	 * @param string $sandbox_mode WooCommerce checkbox value (`yes` or `no`).
+	 * @return array
+	 */
+	function monapay_prepare_checkout_payload( $payload, $sandbox_mode ) {
+		$payload = is_array( $payload ) ? $payload : array();
+		unset( $payload['sandbox'] );
+
+		if ( 'yes' === $sandbox_mode ) {
+			$payload['sandbox'] = true;
+		}
+
+		return $payload;
+	}
+}
+
 if ( ! function_exists( 'monapay_verify_signature' ) ) {
 	/**
 	 * Verify a MONA Pay webhook signature using its unmodified request body.

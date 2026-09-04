@@ -10,6 +10,7 @@ jobs:
       - run: find . -name '*.php' -print0 | xargs -0 -n1 php -l
       - run: php tests/test-signature.php
       - run: php tests/test-return-signature.php
+      - run: php tests/test-checkout-sandbox.php
       - run: php tests/test-oauth.php
       - run: php tests/test-qr.php /tmp/monapay-test-qr.png
       - run: node --check assets/js/admin-settings.js
