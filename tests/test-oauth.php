@@ -4,6 +4,7 @@
  */
 
 define( 'MONAPAY_TESTING', true );
+define( 'ABSPATH', dirname( __DIR__ ) . '/' );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'DAY_IN_SECONDS', 86400 );
 
@@ -16,6 +17,11 @@ $monapay_mock_ttls           = array();
 $monapay_mock_deletes        = 0;
 
 function __( $text, $domain = null ) {
+	unset( $domain );
+	return $text;
+}
+
+function esc_html__( $text, $domain = null ) {
 	unset( $domain );
 	return $text;
 }

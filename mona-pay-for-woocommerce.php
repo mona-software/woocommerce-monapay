@@ -2,8 +2,8 @@
 /**
  * Plugin Name:       MONA Pay for WooCommerce
  * Plugin URI:        https://monapay.vn/
- * Description:       Nhận thanh toán qua trang MONA Pay hoặc VietQR tại cửa hàng và tự động xác nhận đơn WooCommerce.
- * Version:           0.3.2
+ * Description:       Automatic bank-transfer confirmation with VietQR, virtual accounts, and signed webhooks for WooCommerce.
+ * Version:           0.3.3
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Requires Plugins:  woocommerce
@@ -11,7 +11,7 @@
  * Author URI:        https://mona.software/
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       woocommerce-monapay
+ * Text Domain:       mona-pay-for-woocommerce
  * Domain Path:       /languages
  * WC requires at least: 8.0
  * WC tested up to:   10.1
@@ -19,9 +19,11 @@
  * @package MonaPay_WooCommerce
  */
 
-defined( 'ABSPATH' ) || exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
-define( 'MONAPAY_WC_VERSION', '0.3.2' );
+define( 'MONAPAY_WC_VERSION', '0.3.3' );
 define( 'MONAPAY_WC_FILE', __FILE__ );
 define( 'MONAPAY_WC_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MONAPAY_WC_URL', plugin_dir_url( __FILE__ ) );
@@ -45,7 +47,7 @@ function monapay_missing_woocommerce_notice() {
 	}
 	?>
 	<div class="notice notice-error">
-		<p><?php esc_html_e( 'MONA Pay for WooCommerce cần WooCommerce được cài đặt và kích hoạt.', 'woocommerce-monapay' ); ?></p>
+		<p><?php esc_html_e( 'MONA Pay for WooCommerce cần WooCommerce được cài đặt và kích hoạt.', 'mona-pay-for-woocommerce' ); ?></p>
 	</div>
 	<?php
 }
@@ -54,8 +56,6 @@ function monapay_missing_woocommerce_notice() {
  * Load plugin classes after WooCommerce has initialized its gateway base class.
  */
 function monapay_init() {
-	load_plugin_textdomain( 'woocommerce-monapay', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
-
 	if ( ! class_exists( 'WC_Payment_Gateway' ) ) {
 		add_action( 'admin_notices', 'monapay_missing_woocommerce_notice' );
 		return;

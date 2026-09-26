@@ -5,7 +5,9 @@
  * @package MonaPay_WooCommerce
  */
 
-defined( 'ABSPATH' ) || exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 class MonaPay_Webhook {
 	/** Register the REST route. */
@@ -235,7 +237,7 @@ class MonaPay_Webhook {
 		if ( ! function_exists( 'wc_get_logger' ) ) {
 			return;
 		}
-		$context['source'] = 'woocommerce-monapay';
+		$context['source'] = 'mona-pay-for-woocommerce';
 		wc_get_logger()->log( $level, $message, $context );
 	}
 }

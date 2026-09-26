@@ -5,7 +5,9 @@
  * @package MonaPay_WooCommerce
  */
 
-defined( 'ABSPATH' ) || defined( 'MONAPAY_TESTING' ) || exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 if ( ! function_exists( 'monapay_prepare_checkout_payload' ) ) {
 	/**
@@ -138,7 +140,7 @@ if ( ! function_exists( 'monapay_complete_order_payment' ) ) {
 			$order->add_order_note(
 				sprintf(
 					/* translators: 1: received amount, 2: required amount, 3: bank transaction code. */
-					__( 'MONA Pay nhận thiếu: %1$s / %2$s VND (mã %3$s). Đơn chưa được xác nhận.', 'woocommerce-monapay' ),
+					__( 'MONA Pay nhận thiếu: %1$s / %2$s VND (mã %3$s). Đơn chưa được xác nhận.', 'mona-pay-for-woocommerce' ),
 					wc_format_localized_price( $paid_amount ),
 					wc_format_localized_price( $order_total ),
 					$transaction_code
@@ -165,13 +167,13 @@ if ( ! function_exists( 'monapay_complete_order_payment' ) ) {
 		$order->add_order_note(
 			sprintf(
 				/* translators: %s: bank transaction code. */
-				__( 'MONA Pay đã tự động xác nhận thanh toán. Mã giao dịch: %s.', 'woocommerce-monapay' ),
+				__( 'MONA Pay đã tự động xác nhận thanh toán. Mã giao dịch: %s.', 'mona-pay-for-woocommerce' ),
 				$transaction_code
 			)
 		);
 
 		if ( $autocomplete && ! $order->has_status( 'completed' ) ) {
-			$order->update_status( 'completed', __( 'MONA Pay tự động hoàn tất đơn theo cấu hình.', 'woocommerce-monapay' ) );
+			$order->update_status( 'completed', __( 'MONA Pay tự động hoàn tất đơn theo cấu hình.', 'mona-pay-for-woocommerce' ) );
 		}
 
 		return 'completed';

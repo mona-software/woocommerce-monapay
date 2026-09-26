@@ -5,7 +5,9 @@
  * @package MonaPay_WooCommerce
  */
 
-defined( 'ABSPATH' ) || exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 class MonaPay_QR_Endpoint {
 	/** Register public and authenticated admin-post handlers. */
@@ -35,7 +37,9 @@ class MonaPay_QR_Endpoint {
 	 * Verify the order key and stream a generated PNG.
 	 */
 	public function serve() {
-		$order_id = isset( $_GET['order_id'] ) ? absint( wp_unslash( $_GET['order_id'] ) ) : 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public image URL is authenticated with the WooCommerce order key below.
+		$order_id = isset( $_GET['order_id'] ) ? absint( sanitize_text_field( wp_unslash( $_GET['order_id'] ) ) ) : 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public image URL is authenticated with the WooCommerce order key below.
 		$key      = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
 		$order    = $order_id ? wc_get_order( $order_id ) : false;
 
@@ -57,7 +61,7 @@ class MonaPay_QR_Endpoint {
 				wc_get_logger()->error(
 					$exception->getMessage(),
 					array(
-						'source'   => 'woocommerce-monapay',
+						'source'   => 'mona-pay-for-woocommerce',
 						'order_id' => $order_id,
 					)
 				);

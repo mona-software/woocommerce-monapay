@@ -5,22 +5,24 @@
  * @package MonaPay_WooCommerce
  */
 
-defined( 'ABSPATH' ) || exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 class MonaPay_Gateway extends WC_Payment_Gateway {
 	/** Constructor. */
 	public function __construct() {
 		$this->id                 = 'monapay_vietqr';
-		$this->method_title       = __( 'MONA Pay VietQR', 'woocommerce-monapay' );
-		$this->method_description = __( 'Chuyển khách sang trang MONA Pay hoặc hiện VietQR tại cửa hàng, sau đó tự xác nhận bằng webhook HMAC.', 'woocommerce-monapay' );
+		$this->method_title       = __( 'MONA Pay VietQR', 'mona-pay-for-woocommerce' );
+		$this->method_description = __( 'Chuyển khách sang trang MONA Pay hoặc hiện VietQR tại cửa hàng, sau đó tự xác nhận bằng webhook HMAC.', 'mona-pay-for-woocommerce' );
 		$this->has_fields         = false;
 		$this->supports           = array( 'products' );
 
 		$this->init_form_fields();
 		$this->init_settings();
 
-		$this->title       = $this->get_option( 'title', __( 'Chuyển khoản VietQR (tự xác nhận)', 'woocommerce-monapay' ) );
-		$this->description = $this->get_option( 'description', __( 'Quét mã VietQR để chuyển khoản. Đơn hàng được xác nhận tự động khi MONA Pay nhận giao dịch.', 'woocommerce-monapay' ) );
+		$this->title       = $this->get_option( 'title', __( 'Chuyển khoản VietQR (tự xác nhận)', 'mona-pay-for-woocommerce' ) );
+		$this->description = $this->get_option( 'description', __( 'Quét mã VietQR để chuyển khoản. Đơn hàng được xác nhận tự động khi MONA Pay nhận giao dịch.', 'mona-pay-for-woocommerce' ) );
 		$this->enabled     = $this->get_option( 'enabled', 'no' );
 
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
@@ -37,145 +39,145 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 	public function init_form_fields() {
 		$this->form_fields = array(
 			'enabled'                => array(
-				'title'   => __( 'Bật/tắt', 'woocommerce-monapay' ),
+				'title'   => __( 'Bật/tắt', 'mona-pay-for-woocommerce' ),
 				'type'    => 'checkbox',
-				'label'   => __( 'Bật thanh toán MONA Pay VietQR', 'woocommerce-monapay' ),
+				'label'   => __( 'Bật thanh toán MONA Pay VietQR', 'mona-pay-for-woocommerce' ),
 				'default' => 'no',
 			),
 			'title'                  => array(
-				'title'       => __( 'Tiêu đề', 'woocommerce-monapay' ),
+				'title'       => __( 'Tiêu đề', 'mona-pay-for-woocommerce' ),
 				'type'        => 'text',
-				'default'     => __( 'Chuyển khoản VietQR (tự xác nhận)', 'woocommerce-monapay' ),
+				'default'     => __( 'Chuyển khoản VietQR (tự xác nhận)', 'mona-pay-for-woocommerce' ),
 				'desc_tip'    => true,
-				'description' => __( 'Tên phương thức khách thấy tại trang thanh toán.', 'woocommerce-monapay' ),
+				'description' => __( 'Tên phương thức khách thấy tại trang thanh toán.', 'mona-pay-for-woocommerce' ),
 			),
 			'description'            => array(
-				'title'       => __( 'Mô tả', 'woocommerce-monapay' ),
+				'title'       => __( 'Mô tả', 'mona-pay-for-woocommerce' ),
 				'type'        => 'textarea',
-				'default'     => __( 'Quét mã VietQR để chuyển khoản. Đơn hàng được xác nhận tự động khi MONA Pay nhận giao dịch.', 'woocommerce-monapay' ),
-				'description' => __( 'Nội dung hiển thị bên dưới phương thức thanh toán.', 'woocommerce-monapay' ),
+				'default'     => __( 'Quét mã VietQR để chuyển khoản. Đơn hàng được xác nhận tự động khi MONA Pay nhận giao dịch.', 'mona-pay-for-woocommerce' ),
+				'description' => __( 'Nội dung hiển thị bên dưới phương thức thanh toán.', 'mona-pay-for-woocommerce' ),
 			),
 			'payment_mode'           => array(
-				'title'       => __( 'Cách thanh toán', 'woocommerce-monapay' ),
+				'title'       => __( 'Cách thanh toán', 'mona-pay-for-woocommerce' ),
 				'type'        => 'select',
 				'default'     => 'redirect',
-				'description' => __( 'Chọn nơi quý khách xem mã QR và thực hiện thanh toán.', 'woocommerce-monapay' ),
+				'description' => __( 'Chọn nơi quý khách xem mã QR và thực hiện thanh toán.', 'mona-pay-for-woocommerce' ),
 				'options'     => array(
-					'redirect' => __( 'Chuyển sang trang thanh toán MONA Pay', 'woocommerce-monapay' ),
-					'inline'   => __( 'Hiện QR tại cửa hàng', 'woocommerce-monapay' ),
+					'redirect' => __( 'Chuyển sang trang thanh toán MONA Pay', 'mona-pay-for-woocommerce' ),
+					'inline'   => __( 'Hiện QR tại cửa hàng', 'mona-pay-for-woocommerce' ),
 				),
 			),
 			'sandbox_mode'           => array(
-				'title'       => __( 'Chế độ thử (sandbox)', 'woocommerce-monapay' ),
+				'title'       => __( 'Chế độ thử (sandbox)', 'mona-pay-for-woocommerce' ),
 				'type'        => 'checkbox',
-				'label'       => __( 'Không chuyển tiền thật, dùng khi chưa nối ngân hàng', 'woocommerce-monapay' ),
+				'label'       => __( 'Không chuyển tiền thật, dùng khi chưa nối ngân hàng', 'mona-pay-for-woocommerce' ),
 				'default'     => 'no',
-				'description' => __( 'Phiên thanh toán thử chỉ dành cho kiểm tra tích hợp. Phải tắt chế độ sandbox trước khi bán thật.', 'woocommerce-monapay' ),
+				'description' => __( 'Phiên thanh toán thử chỉ dành cho kiểm tra tích hợp. Phải tắt chế độ sandbox trước khi bán thật.', 'mona-pay-for-woocommerce' ),
 			),
 			'api_heading'            => array(
-				'title'       => __( 'Kết nối MONA Pay', 'woocommerce-monapay' ),
+				'title'       => __( 'Kết nối MONA Pay', 'mona-pay-for-woocommerce' ),
 				'type'        => 'title',
-				'description' => __( 'Vào my.monapay.vn → API Keys → Tạo key, hoặc dùng khối “Đưa cho AI” sau khi đăng ký.', 'woocommerce-monapay' ),
+				'description' => __( 'Vào my.monapay.vn → API Keys → Tạo key, hoặc dùng khối “Đưa cho AI” sau khi đăng ký.', 'mona-pay-for-woocommerce' ),
 			),
 			'base_url'               => array(
-				'title'             => __( 'Base URL', 'woocommerce-monapay' ),
+				'title'             => __( 'Base URL', 'mona-pay-for-woocommerce' ),
 				'type'              => 'text',
 				'default'           => 'https://api.monapay.vn',
-				'description'       => __( 'URL gốc của MONA Pay API, không thêm /api/v1.', 'woocommerce-monapay' ),
+				'description'       => __( 'URL gốc của MONA Pay API, không thêm /api/v1.', 'mona-pay-for-woocommerce' ),
 				'custom_attributes' => array( 'required' => 'required' ),
 			),
 			'client_id'              => array(
-				'title'             => __( 'Client ID', 'woocommerce-monapay' ),
+				'title'             => __( 'Client ID', 'mona-pay-for-woocommerce' ),
 				'type'              => 'text',
-				'description'       => __( 'Lấy tại my.monapay.vn → API Keys → Tạo key.', 'woocommerce-monapay' ),
+				'description'       => __( 'Lấy tại my.monapay.vn → API Keys → Tạo key.', 'mona-pay-for-woocommerce' ),
 				'custom_attributes' => array( 'autocomplete' => 'off' ),
 			),
 			'client_secret'          => array(
-				'title'             => __( 'Client Secret', 'woocommerce-monapay' ),
+				'title'             => __( 'Client Secret', 'mona-pay-for-woocommerce' ),
 				'type'              => 'password',
-				'description'       => __( 'Secret chỉ hiển thị một lần khi tạo key; plugin dùng để lấy token và gửi header X-Client-Secret.', 'woocommerce-monapay' ),
+				'description'       => __( 'Secret chỉ hiển thị một lần khi tạo key; plugin dùng để lấy token và gửi header X-Client-Secret.', 'mona-pay-for-woocommerce' ),
 				'custom_attributes' => array( 'autocomplete' => 'new-password' ),
 			),
 			'return_signature_secret' => array(
-				'title'             => __( 'Secret chữ ký quay về', 'woocommerce-monapay' ),
+				'title'             => __( 'Secret chữ ký quay về', 'mona-pay-for-woocommerce' ),
 				'type'              => 'password',
 				'description'       => sprintf(
 					/* translators: %s: MONA Pay hosted checkout documentation URL. */
-					__( 'Lấy tại MONA Pay Dashboard → Cài đặt → Trang thanh toán. <a href="%s" target="_blank" rel="noopener noreferrer">Xem hướng dẫn</a>.', 'woocommerce-monapay' ),
+					__( 'Lấy tại MONA Pay Dashboard → Cài đặt → Trang thanh toán. <a href="%s" target="_blank" rel="noopener noreferrer">Xem hướng dẫn</a>.', 'mona-pay-for-woocommerce' ),
 					esc_url( 'https://monapay.vn/docs/api/trang-thanh-toan/' )
 				),
 				'custom_attributes' => array( 'autocomplete' => 'new-password' ),
 			),
 			'qr_heading'             => array(
-				'title'       => __( 'Thông tin VietQR', 'woocommerce-monapay' ),
+				'title'       => __( 'Thông tin VietQR', 'mona-pay-for-woocommerce' ),
 				'type'        => 'title',
-				'description' => __( 'Sao chép đúng các giá trị ACB/MONA Pay đã cấp cho tài khoản nhận tiền.', 'woocommerce-monapay' ),
+				'description' => __( 'Sao chép đúng các giá trị ACB/MONA Pay đã cấp cho tài khoản nhận tiền.', 'mona-pay-for-woocommerce' ),
 			),
 			'virtual_account_prefix' => array(
-				'title'             => __( 'Đầu số tài khoản ảo', 'woocommerce-monapay' ),
+				'title'             => __( 'Đầu số tài khoản ảo', 'mona-pay-for-woocommerce' ),
 				'type'              => 'text',
-				'description'       => __( 'virtualAccountPrefix, dài từ 1 đến 10 ký tự.', 'woocommerce-monapay' ),
+				'description'       => __( 'virtualAccountPrefix, dài từ 1 đến 10 ký tự.', 'mona-pay-for-woocommerce' ),
 				'custom_attributes' => array( 'maxlength' => '10' ),
 			),
 			'owner_number'           => array(
-				'title'       => __( 'Số tài khoản nhận tiền', 'woocommerce-monapay' ),
+				'title'       => __( 'Số tài khoản nhận tiền', 'mona-pay-for-woocommerce' ),
 				'type'        => 'text',
-				'description' => __( 'ownerNumber của tài khoản ACB.', 'woocommerce-monapay' ),
+				'description' => __( 'ownerNumber của tài khoản ACB.', 'mona-pay-for-woocommerce' ),
 			),
 			'owner_type'             => array(
-				'title'   => __( 'Loại chủ tài khoản', 'woocommerce-monapay' ),
+				'title'   => __( 'Loại chủ tài khoản', 'mona-pay-for-woocommerce' ),
 				'type'    => 'select',
 				'default' => 'ORG',
 				'options' => array(
-					'PER' => __( 'Cá nhân (PER)', 'woocommerce-monapay' ),
-					'ORG' => __( 'Tổ chức (ORG)', 'woocommerce-monapay' ),
+					'PER' => __( 'Cá nhân (PER)', 'mona-pay-for-woocommerce' ),
+					'ORG' => __( 'Tổ chức (ORG)', 'mona-pay-for-woocommerce' ),
 				),
 			),
 			'merchant_id'            => array(
-				'title' => __( 'Merchant ID', 'woocommerce-monapay' ),
+				'title' => __( 'Merchant ID', 'mona-pay-for-woocommerce' ),
 				'type'  => 'text',
 			),
 			'terminal_id'            => array(
-				'title' => __( 'Terminal ID', 'woocommerce-monapay' ),
+				'title' => __( 'Terminal ID', 'mona-pay-for-woocommerce' ),
 				'type'  => 'text',
 			),
 			'beneficiary_name'       => array(
-				'title'             => __( 'Tên người thụ hưởng', 'woocommerce-monapay' ),
+				'title'             => __( 'Tên người thụ hưởng', 'mona-pay-for-woocommerce' ),
 				'type'              => 'text',
-				'description'       => __( 'beneficiaryName hiển thị trên ứng dụng ngân hàng, tối đa 100 ký tự.', 'woocommerce-monapay' ),
+				'description'       => __( 'beneficiaryName hiển thị trên ứng dụng ngân hàng, tối đa 100 ký tự.', 'mona-pay-for-woocommerce' ),
 				'custom_attributes' => array( 'maxlength' => '100' ),
 			),
 			'sandbox_virtual_account' => array(
-				'title'       => __( 'Số VA để thử sandbox', 'woocommerce-monapay' ),
+				'title'       => __( 'Số VA để thử sandbox', 'mona-pay-for-woocommerce' ),
 				'type'        => 'text',
-				'description' => __( 'Số tài khoản ảo đầy đủ đã nối ACB. Lưu trường này để bật nút tạo giao dịch thử 10.000 VND.', 'woocommerce-monapay' ),
+				'description' => __( 'Số tài khoản ảo đầy đủ đã nối ACB. Lưu trường này để bật nút tạo giao dịch thử 10.000 VND.', 'mona-pay-for-woocommerce' ),
 			),
 			'webhook_heading'        => array(
-				'title'       => __( 'Webhook tự xác nhận', 'woocommerce-monapay' ),
+				'title'       => __( 'Webhook tự xác nhận', 'mona-pay-for-woocommerce' ),
 				'type'        => 'title',
-				'description' => __( 'Dùng HMAC-SHA256 để chỉ chấp nhận webhook thật từ MONA Pay.', 'woocommerce-monapay' ),
+				'description' => __( 'Dùng HMAC-SHA256 để chỉ chấp nhận webhook thật từ MONA Pay.', 'mona-pay-for-woocommerce' ),
 			),
 			'webhook_secret'         => array(
-				'title'       => __( 'Secret HMAC webhook', 'woocommerce-monapay' ),
+				'title'       => __( 'Secret HMAC webhook', 'mona-pay-for-woocommerce' ),
 				'type'        => 'webhook_secret',
-				'description' => __( 'Dùng cùng secret này khi tạo cấu hình webhook HMAC_SHA256 trên MONA Pay. Nên dài ít nhất 32 ký tự.', 'woocommerce-monapay' ),
+				'description' => __( 'Dùng cùng secret này khi tạo cấu hình webhook HMAC_SHA256 trên MONA Pay. Nên dài ít nhất 32 ký tự.', 'mona-pay-for-woocommerce' ),
 			),
 			'autocomplete_orders'    => array(
-				'title'       => __( 'Tự hoàn tất đơn', 'woocommerce-monapay' ),
+				'title'       => __( 'Tự hoàn tất đơn', 'mona-pay-for-woocommerce' ),
 				'type'        => 'checkbox',
-				'label'       => __( 'Chuyển thẳng đơn sang Hoàn tất sau khi nhận đủ tiền', 'woocommerce-monapay' ),
+				'label'       => __( 'Chuyển thẳng đơn sang Hoàn tất sau khi nhận đủ tiền', 'mona-pay-for-woocommerce' ),
 				'default'     => 'no',
-				'description' => __( 'Nếu tắt, WooCommerce chọn Đang xử lý/Hoàn tất theo loại sản phẩm sau payment_complete().', 'woocommerce-monapay' ),
+				'description' => __( 'Nếu tắt, WooCommerce chọn Đang xử lý/Hoàn tất theo loại sản phẩm sau payment_complete().', 'mona-pay-for-woocommerce' ),
 			),
 			'show_branding'          => array(
-				'title'       => __( 'Nhận diện MONA Pay', 'woocommerce-monapay' ),
+				'title'       => __( 'Nhận diện MONA Pay', 'mona-pay-for-woocommerce' ),
 				'type'        => 'checkbox',
-				'label'       => __( 'Hiển thị dòng xác nhận tự động bởi MONA Pay trên trang đơn hàng', 'woocommerce-monapay' ),
+				'label'       => __( 'Hiển thị dòng xác nhận tự động bởi MONA Pay trên trang đơn hàng', 'mona-pay-for-woocommerce' ),
 				'default'     => 'no',
-				'description' => __( 'Tuỳ chọn này mặc định TẮT; chỉ bật khi quý khách chủ động muốn ghi nhận MONA Pay trên trang đơn hàng.', 'woocommerce-monapay' ),
+				'description' => __( 'Tuỳ chọn này mặc định TẮT; chỉ bật khi quý khách chủ động muốn ghi nhận MONA Pay trên trang đơn hàng.', 'mona-pay-for-woocommerce' ),
 			),
 			'webhook_tools'          => array(
-				'title' => __( 'Cấu hình và kiểm tra', 'woocommerce-monapay' ),
+				'title' => __( 'Cấu hình và kiểm tra', 'mona-pay-for-woocommerce' ),
 				'type'  => 'webhook_tools',
 			),
 		);
@@ -226,18 +228,18 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 	public function process_payment( $order_id ) {
 		$order = wc_get_order( $order_id );
 		if ( ! $order ) {
-			wc_add_notice( __( 'Không tìm thấy đơn hàng để thanh toán qua MONA Pay.', 'woocommerce-monapay' ), 'error' );
+			wc_add_notice( __( 'Không tìm thấy đơn hàng để thanh toán qua MONA Pay.', 'mona-pay-for-woocommerce' ), 'error' );
 			return null;
 		}
 
 		if ( 'VND' !== $order->get_currency() ) {
-			wc_add_notice( __( 'MONA Pay chỉ hỗ trợ đơn hàng VND.', 'woocommerce-monapay' ), 'error' );
+			wc_add_notice( __( 'MONA Pay chỉ hỗ trợ đơn hàng VND.', 'mona-pay-for-woocommerce' ), 'error' );
 			return null;
 		}
 
 		$amount = (int) round( (float) $order->get_total() );
 		if ( $amount <= 0 || $amount > 1000000000 ) {
-			wc_add_notice( __( 'Tổng đơn vượt giới hạn thanh toán của MONA Pay.', 'woocommerce-monapay' ), 'error' );
+			wc_add_notice( __( 'Tổng đơn vượt giới hạn thanh toán của MONA Pay.', 'mona-pay-for-woocommerce' ), 'error' );
 			return null;
 		}
 
@@ -251,7 +253,7 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 	/** Create a hosted checkout and redirect the customer to MONA Pay. */
 	private function process_redirect_payment( $order, $amount ) {
 		if ( $amount < 1000 ) {
-			wc_add_notice( __( 'Tổng đơn cần từ 1.000 VND để thanh toán trên MONA Pay.', 'woocommerce-monapay' ), 'error' );
+			wc_add_notice( __( 'Tổng đơn cần từ 1.000 VND để thanh toán trên MONA Pay.', 'mona-pay-for-woocommerce' ), 'error' );
 			return null;
 		}
 
@@ -283,12 +285,16 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 		$payer_email = trim( (string) $order->get_billing_email() );
 		$payer_name  = trim( (string) $order->get_formatted_billing_full_name() );
 		$payer_name  = function_exists( 'mb_substr' ) ? mb_substr( $payer_name, 0, 255 ) : substr( $payer_name, 0, 255 );
+		$return_args = array(
+			'order_id' => $order->get_id(),
+			'key'      => $order->get_order_key(),
+		);
 		$payload     = array(
 			'amount'      => $amount,
 			'order_code'  => 'DH' . $order->get_id(),
 			'description' => 'Thanh toán đơn hàng DH' . $order->get_id(),
-			'return_url'  => WC()->api_request_url( 'monapay_return' ),
-			'cancel_url'  => wc_get_checkout_url(),
+			'return_url'  => add_query_arg( $return_args, WC()->api_request_url( 'monapay_return' ) ),
+			'cancel_url'  => add_query_arg( $return_args, wc_get_checkout_url() ),
 			'metadata'    => array( 'wc_order_id' => $order->get_id() ),
 		);
 		if ( '' !== $payer_email ) {
@@ -320,14 +326,14 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 			$order->save();
 
 			if ( ! $order->has_status( 'pending' ) ) {
-				$order->update_status( 'pending', __( 'Đã tạo trang thanh toán MONA Pay; đang chờ giao dịch.', 'woocommerce-monapay' ) );
+				$order->update_status( 'pending', __( 'Đã tạo trang thanh toán MONA Pay; đang chờ giao dịch.', 'mona-pay-for-woocommerce' ) );
 			} else {
-				$order->add_order_note( __( 'Đã tạo trang thanh toán MONA Pay; đang chờ giao dịch.', 'woocommerce-monapay' ) );
+				$order->add_order_note( __( 'Đã tạo trang thanh toán MONA Pay; đang chờ giao dịch.', 'mona-pay-for-woocommerce' ) );
 			}
 			wc_reduce_stock_levels( $order->get_id() );
 		} catch ( Exception $exception ) {
 			$this->log( 'error', $exception->getMessage(), array( 'order_id' => $order->get_id(), 'operation' => 'create_checkout' ) );
-			wc_add_notice( __( 'Chưa thể mở trang thanh toán MONA Pay. Vui lòng thử lại hoặc chọn phương thức khác.', 'woocommerce-monapay' ), 'error' );
+			wc_add_notice( __( 'Chưa thể mở trang thanh toán MONA Pay. Vui lòng thử lại hoặc chọn phương thức khác.', 'mona-pay-for-woocommerce' ), 'error' );
 			return null;
 		}
 
@@ -380,13 +386,13 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 					$exception->getMessage(),
 					array( 'order_id' => $order_id )
 				);
-				wc_add_notice( __( 'Chưa thể tạo mã VietQR. Vui lòng thử lại hoặc chọn phương thức thanh toán khác.', 'woocommerce-monapay' ), 'error' );
+				wc_add_notice( __( 'Chưa thể tạo mã VietQR. Vui lòng thử lại hoặc chọn phương thức thanh toán khác.', 'mona-pay-for-woocommerce' ), 'error' );
 				return null;
 			}
 		}
 
 		if ( ! $order->has_status( 'on-hold' ) ) {
-			$order->update_status( 'on-hold', __( 'Đã tạo VietQR MONA Pay; đang chờ giao dịch ngân hàng.', 'woocommerce-monapay' ) );
+			$order->update_status( 'on-hold', __( 'Đã tạo VietQR MONA Pay; đang chờ giao dịch ngân hàng.', 'mona-pay-for-woocommerce' ) );
 		}
 
 		$this->empty_cart();
@@ -429,20 +435,20 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 
 		if ( $plain_text ) {
 			if ( $this->is_order_sandbox( $order ) ) {
-				echo "\n" . esc_html__( 'Đơn thử nghiệm (sandbox), không chuyển tiền thật', 'woocommerce-monapay' ) . "\n";
+				echo "\n" . esc_html__( 'Đơn thử nghiệm (sandbox), không chuyển tiền thật', 'mona-pay-for-woocommerce' ) . "\n";
 			}
 			if ( 'redirect' === $this->get_order_payment_mode( $order ) ) {
-				echo "\n" . esc_html__( 'THANH TOÁN MONA PAY', 'woocommerce-monapay' ) . "\n";
-				echo esc_html__( 'Mở trang thanh toán:', 'woocommerce-monapay' ) . ' ' . esc_url_raw( (string) $order->get_meta( '_monapay_checkout_url', true ) ) . "\n\n";
+				echo "\n" . esc_html__( 'THANH TOÁN MONA PAY', 'mona-pay-for-woocommerce' ) . "\n";
+				echo esc_html__( 'Mở trang thanh toán:', 'mona-pay-for-woocommerce' ) . ' ' . esc_url_raw( (string) $order->get_meta( '_monapay_checkout_url', true ) ) . "\n\n";
 				return;
 			}
 			$account = (string) $order->get_meta( '_monapay_virtual_account_number', true );
-			echo "\n" . esc_html__( 'THANH TOÁN VIETQR MONA PAY', 'woocommerce-monapay' ) . "\n";
-			echo esc_html__( 'Nội dung chuyển khoản:', 'woocommerce-monapay' ) . ' DH' . esc_html( (string) $order->get_id() ) . "\n";
+			echo "\n" . esc_html__( 'THANH TOÁN VIETQR MONA PAY', 'mona-pay-for-woocommerce' ) . "\n";
+			echo esc_html__( 'Nội dung chuyển khoản:', 'mona-pay-for-woocommerce' ) . ' DH' . esc_html( (string) $order->get_id() ) . "\n";
 			if ( '' !== $account ) {
-				echo esc_html__( 'Số tài khoản ảo:', 'woocommerce-monapay' ) . ' ' . esc_html( $account ) . "\n";
+				echo esc_html__( 'Số tài khoản ảo:', 'mona-pay-for-woocommerce' ) . ' ' . esc_html( $account ) . "\n";
 			}
-			echo esc_html__( 'Mở ảnh QR:', 'woocommerce-monapay' ) . ' ' . esc_url_raw( MonaPay_QR_Endpoint::get_url( $order ) ) . "\n\n";
+			echo esc_html__( 'Mở ảnh QR:', 'mona-pay-for-woocommerce' ) . ' ' . esc_url_raw( MonaPay_QR_Endpoint::get_url( $order ) ) . "\n\n";
 			return;
 		}
 
@@ -467,24 +473,24 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 		$style   = $email ? 'border:1px solid #e5e7eb;padding:20px;margin:20px 0;text-align:center;' : 'border:1px solid #e5e7eb;border-radius:8px;padding:24px;margin:24px 0;text-align:center;';
 		?>
 		<section class="woocommerce-monapay-payment" style="<?php echo esc_attr( $style ); ?>">
-			<h2><?php esc_html_e( 'Quét VietQR để thanh toán', 'woocommerce-monapay' ); ?></h2>
+			<h2><?php esc_html_e( 'Quét VietQR để thanh toán', 'mona-pay-for-woocommerce' ); ?></h2>
 			<?php $this->render_sandbox_warning( $order ); ?>
-			<p><?php esc_html_e( 'Quý khách vui lòng kiểm tra thông tin thanh toán trước khi thực hiện giao dịch.', 'woocommerce-monapay' ); ?></p>
+			<p><?php esc_html_e( 'Quý khách vui lòng kiểm tra thông tin thanh toán trước khi thực hiện giao dịch.', 'mona-pay-for-woocommerce' ); ?></p>
 			<p style="font-size:24px;font-weight:700;margin:12px 0;"><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></p>
-			<p><img src="<?php echo esc_url( $qr_url ); ?>" width="320" height="320" alt="<?php esc_attr_e( 'Mã VietQR thanh toán đơn hàng', 'woocommerce-monapay' ); ?>" style="display:block;max-width:100%;height:auto;margin:16px auto;" /></p>
+			<p><img src="<?php echo esc_url( $qr_url ); ?>" width="320" height="320" alt="<?php esc_attr_e( 'Mã VietQR thanh toán đơn hàng', 'mona-pay-for-woocommerce' ); ?>" style="display:block;max-width:100%;height:auto;margin:16px auto;" /></p>
 			<?php if ( ! $email && 'yes' === $this->get_option( 'show_branding', 'no' ) ) : ?>
 				<p style="font-size:12px;margin:-6px 0 16px;color:#6b7280;">
-					<a href="<?php echo esc_url( 'https://monapay.vn?utm_source=woocommerce' ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Xác nhận thanh toán tự động bởi MONA Pay', 'woocommerce-monapay' ); ?></a>
+					<a href="<?php echo esc_url( 'https://monapay.vn?utm_source=woocommerce' ); ?>" target="_blank" rel="noopener"><?php esc_html_e( 'Xác nhận thanh toán tự động bởi MONA Pay', 'mona-pay-for-woocommerce' ); ?></a>
 				</p>
 			<?php endif; ?>
 			<p>
 				<?php if ( '' !== $account ) : ?>
-					<strong><?php esc_html_e( 'Số tài khoản ảo:', 'woocommerce-monapay' ); ?></strong> <?php echo esc_html( $account ); ?><br />
+					<strong><?php esc_html_e( 'Số tài khoản ảo:', 'mona-pay-for-woocommerce' ); ?></strong> <?php echo esc_html( $account ); ?><br />
 				<?php endif; ?>
-				<strong><?php esc_html_e( 'Người thụ hưởng:', 'woocommerce-monapay' ); ?></strong> <?php echo esc_html( (string) $this->get_option( 'beneficiary_name' ) ); ?><br />
-				<strong><?php esc_html_e( 'Nội dung chuyển khoản:', 'woocommerce-monapay' ); ?></strong> <?php echo esc_html( 'DH' . $order->get_id() ); ?>
+				<strong><?php esc_html_e( 'Người thụ hưởng:', 'mona-pay-for-woocommerce' ); ?></strong> <?php echo esc_html( (string) $this->get_option( 'beneficiary_name' ) ); ?><br />
+				<strong><?php esc_html_e( 'Nội dung chuyển khoản:', 'mona-pay-for-woocommerce' ); ?></strong> <?php echo esc_html( 'DH' . $order->get_id() ); ?>
 			</p>
-			<p><?php esc_html_e( 'Đơn hàng sẽ được xác nhận tự động sau khi ngân hàng ghi nhận giao dịch.', 'woocommerce-monapay' ); ?></p>
+			<p><?php esc_html_e( 'Đơn hàng sẽ được xác nhận tự động sau khi ngân hàng ghi nhận giao dịch.', 'mona-pay-for-woocommerce' ); ?></p>
 		</section>
 		<?php
 	}
@@ -494,22 +500,22 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 		$checkout_url    = (string) $order->get_meta( '_monapay_checkout_url', true );
 		$checkout_status = (string) $order->get_meta( '_monapay_checkout_status', true );
 		$is_pending      = ! $order->is_paid();
-		$status_text     = $order->is_paid() ? __( 'Đã thanh toán', 'woocommerce-monapay' ) : __( 'Đang chờ thanh toán', 'woocommerce-monapay' );
+		$status_text     = $order->is_paid() ? __( 'Đã thanh toán', 'mona-pay-for-woocommerce' ) : __( 'Đang chờ thanh toán', 'mona-pay-for-woocommerce' );
 		if ( $is_pending && 'cancelled' === $checkout_status ) {
-			$status_text = __( 'Chưa thanh toán', 'woocommerce-monapay' );
+			$status_text = __( 'Chưa thanh toán', 'mona-pay-for-woocommerce' );
 		}
 		$style = $email ? 'border:1px solid #e5e7eb;padding:20px;margin:20px 0;text-align:center;' : 'border:1px solid #e5e7eb;border-radius:8px;padding:24px;margin:24px 0;text-align:center;';
 		?>
 		<section class="woocommerce-monapay-payment" style="<?php echo esc_attr( $style ); ?>">
-			<h2><?php esc_html_e( 'Thanh toán MONA Pay', 'woocommerce-monapay' ); ?></h2>
+			<h2><?php esc_html_e( 'Thanh toán MONA Pay', 'mona-pay-for-woocommerce' ); ?></h2>
 			<?php $this->render_sandbox_warning( $order ); ?>
-			<p><strong><?php esc_html_e( 'Trạng thái:', 'woocommerce-monapay' ); ?></strong> <?php echo esc_html( $status_text ); ?></p>
+			<p><strong><?php esc_html_e( 'Trạng thái:', 'mona-pay-for-woocommerce' ); ?></strong> <?php echo esc_html( $status_text ); ?></p>
 			<p style="font-size:24px;font-weight:700;margin:12px 0;"><?php echo wp_kses_post( $order->get_formatted_order_total() ); ?></p>
 			<?php if ( $is_pending && '' !== $checkout_url ) : ?>
-				<p><a href="<?php echo esc_url( $checkout_url ); ?>" class="<?php echo esc_attr( $email ? 'button' : 'button alt' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Mở lại trang thanh toán', 'woocommerce-monapay' ); ?></a></p>
+				<p><a href="<?php echo esc_url( $checkout_url ); ?>" class="<?php echo esc_attr( $email ? 'button' : 'button alt' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Mở lại trang thanh toán', 'mona-pay-for-woocommerce' ); ?></a></p>
 			<?php endif; ?>
 			<?php if ( ! $email && 'yes' === $this->get_option( 'show_branding', 'no' ) ) : ?>
-				<p style="font-size:12px;margin:16px 0 0;color:#6b7280;"><a href="<?php echo esc_url( 'https://monapay.vn?utm_source=woocommerce' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Xác nhận thanh toán tự động bởi MONA Pay', 'woocommerce-monapay' ); ?></a></p>
+				<p style="font-size:12px;margin:16px 0 0;color:#6b7280;"><a href="<?php echo esc_url( 'https://monapay.vn?utm_source=woocommerce' ); ?>" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Xác nhận thanh toán tự động bởi MONA Pay', 'mona-pay-for-woocommerce' ); ?></a></p>
 			<?php endif; ?>
 		</section>
 		<?php
@@ -537,7 +543,7 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 		$order->update_meta_data( '_monapay_sandbox', $is_sandbox ? 'yes' : 'no' );
 
 		if ( $is_sandbox && 'yes' !== $stored_mode ) {
-			$order->add_order_note( __( '[Sandbox] Đơn thử nghiệm, không chuyển tiền thật.', 'woocommerce-monapay' ) );
+			$order->add_order_note( __( '[Sandbox] Đơn thử nghiệm, không chuyển tiền thật.', 'mona-pay-for-woocommerce' ) );
 		}
 	}
 
@@ -547,7 +553,7 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 			return;
 		}
 		?>
-		<p style="background:#fff3cd;border:1px solid #ffecb5;color:#664d03;padding:10px 12px;margin:12px 0;"><strong><?php esc_html_e( 'Đơn thử nghiệm (sandbox), không chuyển tiền thật', 'woocommerce-monapay' ); ?></strong></p>
+		<p style="background:#fff3cd;border:1px solid #ffecb5;color:#664d03;padding:10px 12px;margin:12px 0;"><strong><?php esc_html_e( 'Đơn thử nghiệm (sandbox), không chuyển tiền thật', 'mona-pay-for-woocommerce' ); ?></strong></p>
 		<?php
 	}
 
@@ -595,7 +601,7 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 		$value = untrailingslashit( esc_url_raw( trim( (string) $value ) ) );
 		$value = preg_replace( '#/api/v1/?$#i', '', $value );
 		if ( ! wp_http_validate_url( $value ) ) {
-			$this->add_error( __( 'Base URL MONA Pay không hợp lệ.', 'woocommerce-monapay' ) );
+			$this->add_error( __( 'Base URL MONA Pay không hợp lệ.', 'mona-pay-for-woocommerce' ) );
 			return (string) $this->get_option( 'base_url', 'https://api.monapay.vn' );
 		}
 		return $value;
@@ -647,7 +653,7 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 	public function validate_webhook_secret_field( $key, $value ) {
 		$value = sanitize_text_field( wp_unslash( $value ) );
 		if ( '' !== $value && strlen( $value ) < 32 ) {
-			$this->add_error( __( 'Secret HMAC webhook phải dài ít nhất 32 ký tự.', 'woocommerce-monapay' ) );
+			$this->add_error( __( 'Secret HMAC webhook phải dài ít nhất 32 ký tự.', 'mona-pay-for-woocommerce' ) );
 			return (string) $this->get_option( $key, '' );
 		}
 		return $value;
@@ -671,7 +677,7 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 			<td class="forminp">
 				<fieldset>
 					<input class="input-text regular-input" type="password" name="<?php echo esc_attr( $field_key ); ?>" id="<?php echo esc_attr( $field_key ); ?>" value="<?php echo esc_attr( $this->get_option( $key ) ); ?>" autocomplete="new-password" />
-					<button type="button" class="button" id="monapay-generate-secret"><?php esc_html_e( 'Tự sinh secret', 'woocommerce-monapay' ); ?></button>
+					<button type="button" class="button" id="monapay-generate-secret"><?php esc_html_e( 'Tự sinh secret', 'mona-pay-for-woocommerce' ); ?></button>
 					<p class="description"><?php echo esc_html( $data['description'] ); ?></p>
 				</fieldset>
 			</td>
@@ -694,16 +700,16 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 			<td class="forminp">
 				<p><code><?php echo esc_html( $url ); ?></code></p>
 				<p class="description">
-					<?php esc_html_e( 'Trong dashboard my.monapay.vn, tạo webhook với URL trên, auth_type HMAC_SHA256, payload application/json và cùng Secret HMAC. Lưu cài đặt này trước khi gửi thử.', 'woocommerce-monapay' ); ?>
-					<a href="https://my.monapay.vn/" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Mở MONA Pay Dashboard', 'woocommerce-monapay' ); ?></a>
+					<?php esc_html_e( 'Trong dashboard my.monapay.vn, tạo webhook với URL trên, auth_type HMAC_SHA256, payload application/json và cùng Secret HMAC. Lưu cài đặt này trước khi gửi thử.', 'mona-pay-for-woocommerce' ); ?>
+					<a href="https://my.monapay.vn/" target="_blank" rel="noopener noreferrer"><?php esc_html_e( 'Mở MONA Pay Dashboard', 'mona-pay-for-woocommerce' ); ?></a>
 				</p>
 				<p>
-					<button type="button" class="button button-secondary" id="monapay-test-webhook"><?php esc_html_e( 'Bắn webhook thử', 'woocommerce-monapay' ); ?></button>
-					<button type="button" class="button button-secondary" id="monapay-test-sandbox"<?php disabled( '' === $va ); ?>><?php esc_html_e( 'Tạo giao dịch thử (sandbox)', 'woocommerce-monapay' ); ?></button>
+					<button type="button" class="button button-secondary" id="monapay-test-webhook"><?php esc_html_e( 'Bắn webhook thử', 'mona-pay-for-woocommerce' ); ?></button>
+					<button type="button" class="button button-secondary" id="monapay-test-sandbox"<?php disabled( '' === $va ); ?>><?php esc_html_e( 'Tạo giao dịch thử (sandbox)', 'mona-pay-for-woocommerce' ); ?></button>
 					<span class="spinner" id="monapay-test-spinner"></span>
 				</p>
 				<?php if ( '' === $va ) : ?>
-					<p class="description"><?php esc_html_e( 'Nhập và lưu “Số VA để thử sandbox” để bật nút giao dịch thử.', 'woocommerce-monapay' ); ?></p>
+					<p class="description"><?php esc_html_e( 'Nhập và lưu “Số VA để thử sandbox” để bật nút giao dịch thử.', 'mona-pay-for-woocommerce' ); ?></p>
 				<?php endif; ?>
 				<p id="monapay-test-result" aria-live="polite"></p>
 			</td>
@@ -719,7 +725,7 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 		}
 		?>
 		<div class="notice notice-warning inline">
-			<p><strong><?php esc_html_e( 'MONA Pay đang bật chế độ thử (sandbox).', 'woocommerce-monapay' ); ?></strong> <?php esc_html_e( 'Không có tiền thật được chuyển; hãy tắt chế độ này trước khi bán thật.', 'woocommerce-monapay' ); ?></p>
+			<p><strong><?php esc_html_e( 'MONA Pay đang bật chế độ thử (sandbox).', 'mona-pay-for-woocommerce' ); ?></strong> <?php esc_html_e( 'Không có tiền thật được chuyển; hãy tắt chế độ này trước khi bán thật.', 'mona-pay-for-woocommerce' ); ?></p>
 		</div>
 		<?php
 	}
@@ -727,7 +733,7 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 	/** Add an order action for simulating payment of an unpaid sandbox order. */
 	public function add_sandbox_order_action( $actions, $order ) {
 		if ( $this->can_create_order_sandbox_transaction( $order ) ) {
-			$actions['monapay_create_sandbox_transaction'] = __( 'MONA Pay: Tạo giao dịch thử (sandbox)', 'woocommerce-monapay' );
+			$actions['monapay_create_sandbox_transaction'] = __( 'MONA Pay: Tạo giao dịch thử (sandbox)', 'mona-pay-for-woocommerce' );
 		}
 
 		return $actions;
@@ -742,7 +748,7 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 		$amount          = (int) round( (float) $order->get_total() );
 		$virtual_account = $this->get_order_sandbox_virtual_account( $order );
 		if ( '' === $virtual_account ) {
-			$order->add_order_note( __( '[Sandbox] Chưa thể tạo giao dịch thử: checkout và cài đặt chưa có số tài khoản ảo.', 'woocommerce-monapay' ) );
+			$order->add_order_note( __( '[Sandbox] Chưa thể tạo giao dịch thử: checkout và cài đặt chưa có số tài khoản ảo.', 'mona-pay-for-woocommerce' ) );
 			return;
 		}
 
@@ -753,17 +759,17 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 			$note = '' !== $code
 				? sprintf(
 					/* translators: %s: sandbox transaction code. */
-					__( '[Sandbox] Đã tạo giao dịch thử cho đơn này. Mã giao dịch: %s. Đang chờ webhook xác nhận.', 'woocommerce-monapay' ),
+					__( '[Sandbox] Đã tạo giao dịch thử cho đơn này. Mã giao dịch: %s. Đang chờ webhook xác nhận.', 'mona-pay-for-woocommerce' ),
 					$code
 				)
-				: __( '[Sandbox] Đã tạo giao dịch thử cho đơn này. Đang chờ webhook xác nhận.', 'woocommerce-monapay' );
+				: __( '[Sandbox] Đã tạo giao dịch thử cho đơn này. Đang chờ webhook xác nhận.', 'mona-pay-for-woocommerce' );
 			$order->add_order_note( $note );
 		} catch ( Exception $exception ) {
 			$this->log( 'error', $exception->getMessage(), array( 'order_id' => $order->get_id(), 'operation' => 'order_sandbox_transaction' ) );
 			$order->add_order_note(
 				sprintf(
 					/* translators: %s: MONA Pay API error. */
-					__( '[Sandbox] Không thể tạo giao dịch thử: %s', 'woocommerce-monapay' ),
+					__( '[Sandbox] Không thể tạo giao dịch thử: %s', 'mona-pay-for-woocommerce' ),
 					sanitize_text_field( $exception->getMessage() )
 				)
 			);
@@ -814,9 +820,12 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 
 	/** Return whether the current request is this gateway's settings page. */
 	private function is_gateway_settings_screen() {
-		$page    = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
-		$tab     = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '';
-		$section = isset( $_GET['section'] ) ? sanitize_key( wp_unslash( $_GET['section'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin screen routing; no state is changed.
+		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin screen routing; no state is changed.
+		$tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only admin screen routing; no state is changed.
+		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
 		return 'wc-settings' === $page && 'checkout' === $tab && $this->id === $section;
 	}
 
@@ -839,12 +848,12 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 			array(
 				'ajaxUrl'       => admin_url( 'admin-ajax.php' ),
 				'nonce'         => wp_create_nonce( 'monapay_admin' ),
-				'confirmWebhook' => __( 'Bắn một webhook giả lập từ MONA Pay tới website này?', 'woocommerce-monapay' ),
-				'confirmSandbox' => __( 'Tạo giao dịch sandbox 10.000 VND cho VA đã cấu hình?', 'woocommerce-monapay' ),
-				'testingWebhook' => __( 'Đang bắn webhook thử…', 'woocommerce-monapay' ),
-				'testingSandbox' => __( 'Đang tạo giao dịch sandbox…', 'woocommerce-monapay' ),
-				'genericError'   => __( 'Không thể hoàn tất thao tác thử.', 'woocommerce-monapay' ),
-				'generated'      => __( 'Đã tạo secret mới. Hãy lưu cài đặt và cập nhật cùng secret trên MONA Pay.', 'woocommerce-monapay' ),
+				'confirmWebhook' => __( 'Bắn một webhook giả lập từ MONA Pay tới website này?', 'mona-pay-for-woocommerce' ),
+				'confirmSandbox' => __( 'Tạo giao dịch sandbox 10.000 VND cho VA đã cấu hình?', 'mona-pay-for-woocommerce' ),
+				'testingWebhook' => __( 'Đang bắn webhook thử…', 'mona-pay-for-woocommerce' ),
+				'testingSandbox' => __( 'Đang tạo giao dịch sandbox…', 'mona-pay-for-woocommerce' ),
+				'genericError'   => __( 'Không thể hoàn tất thao tác thử.', 'mona-pay-for-woocommerce' ),
+				'generated'      => __( 'Đã tạo secret mới. Hãy lưu cài đặt và cập nhật cùng secret trên MONA Pay.', 'mona-pay-for-woocommerce' ),
 			)
 		);
 	}
@@ -852,19 +861,19 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 	/** Secure AJAX handler for POST /client-webhooks/test. */
 	public function ajax_test_webhook() {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Bạn không có quyền thực hiện thao tác này.', 'woocommerce-monapay' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Bạn không có quyền thực hiện thao tác này.', 'mona-pay-for-woocommerce' ) ), 403 );
 		}
 		check_ajax_referer( 'monapay_admin', 'nonce' );
 
 		$secret = (string) $this->get_option( 'webhook_secret' );
 		if ( strlen( $secret ) < 32 ) {
-			wp_send_json_error( array( 'message' => __( 'Hãy lưu Secret HMAC dài ít nhất 32 ký tự trước.', 'woocommerce-monapay' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Hãy lưu Secret HMAC dài ít nhất 32 ký tự trước.', 'mona-pay-for-woocommerce' ) ), 400 );
 		}
 
 		try {
 			$api = new MonaPay_API( $this->get_api_settings() );
 			$api->test_webhook( rest_url( 'monapay/v1/webhook' ), $secret );
-			wp_send_json_success( array( 'message' => __( 'Webhook thử đã được MONA Pay gửi và endpoint trả về thành công.', 'woocommerce-monapay' ) ) );
+			wp_send_json_success( array( 'message' => __( 'Webhook thử đã được MONA Pay gửi và endpoint trả về thành công.', 'mona-pay-for-woocommerce' ) ) );
 		} catch ( Exception $exception ) {
 			$this->log( 'error', $exception->getMessage(), array( 'operation' => 'test_webhook' ) );
 			wp_send_json_error( array( 'message' => sanitize_text_field( $exception->getMessage() ) ), 400 );
@@ -874,13 +883,13 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 	/** Secure AJAX handler for POST /sandbox/transactions. */
 	public function ajax_test_sandbox() {
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Bạn không có quyền thực hiện thao tác này.', 'woocommerce-monapay' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Bạn không có quyền thực hiện thao tác này.', 'mona-pay-for-woocommerce' ) ), 403 );
 		}
 		check_ajax_referer( 'monapay_admin', 'nonce' );
 
 		$virtual_account = sanitize_text_field( (string) $this->get_option( 'sandbox_virtual_account', '' ) );
 		if ( '' === $virtual_account ) {
-			wp_send_json_error( array( 'message' => __( 'Hãy nhập và lưu số VA đầy đủ trước khi tạo giao dịch sandbox.', 'woocommerce-monapay' ) ), 400 );
+			wp_send_json_error( array( 'message' => __( 'Hãy nhập và lưu số VA đầy đủ trước khi tạo giao dịch sandbox.', 'mona-pay-for-woocommerce' ) ), 400 );
 		}
 
 		try {
@@ -890,10 +899,10 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 			$message = '' !== $code
 				? sprintf(
 					/* translators: %s: sandbox transaction code. */
-					__( 'Đã tạo giao dịch sandbox 10.000 VND. Mã giao dịch: %s.', 'woocommerce-monapay' ),
+					__( 'Đã tạo giao dịch sandbox 10.000 VND. Mã giao dịch: %s.', 'mona-pay-for-woocommerce' ),
 					$code
 				)
-				: __( 'Đã tạo giao dịch sandbox 10.000 VND; MONA Pay đang gửi webhook.', 'woocommerce-monapay' );
+				: __( 'Đã tạo giao dịch sandbox 10.000 VND; MONA Pay đang gửi webhook.', 'mona-pay-for-woocommerce' );
 			wp_send_json_success( array( 'message' => $message ) );
 		} catch ( Exception $exception ) {
 			$this->log( 'error', $exception->getMessage(), array( 'operation' => 'test_sandbox' ) );
@@ -903,7 +912,7 @@ class MonaPay_Gateway extends WC_Payment_Gateway {
 
 	/** Write to the WooCommerce logger without credentials or payload secrets. */
 	private function log( $level, $message, $context = array() ) {
-		$context['source'] = 'woocommerce-monapay';
+		$context['source'] = 'mona-pay-for-woocommerce';
 		wc_get_logger()->log( $level, $message, $context );
 	}
 }

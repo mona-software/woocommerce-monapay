@@ -2,41 +2,28 @@
 set -eu
 
 PLUGIN_ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
-PLUGIN_NAME=$(basename "$PLUGIN_ROOT")
-PARENT_DIR=$(dirname "$PLUGIN_ROOT")
+PLUGIN_SLUG="mona-pay-for-woocommerce"
 DIST_DIR="$PLUGIN_ROOT/dist"
-OUTPUT_ZIP="$DIST_DIR/woocommerce-monapay-0.3.2.zip"
-TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/woocommerce-monapay-build.XXXXXX")
-TEMP_ZIP="$TEMP_DIR/woocommerce-monapay-0.3.2.zip"
+OUTPUT_ZIP="$DIST_DIR/mona-pay-for-woocommerce-0.3.3.zip"
+TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/mona-pay-for-woocommerce-build.XXXXXX")
+STAGE_DIR="$TEMP_DIR/$PLUGIN_SLUG"
+TEMP_ZIP="$TEMP_DIR/mona-pay-for-woocommerce-0.3.3.zip"
 
 cleanup() {
 	rm -rf "$TEMP_DIR"
 }
 trap cleanup EXIT INT TERM
 
-cd "$PARENT_DIR"
-zip -rq "$TEMP_ZIP" "$PLUGIN_NAME" \
-	-x "$PLUGIN_NAME/tests" \
-	   "$PLUGIN_NAME/tests/*" \
-	   "$PLUGIN_NAME/assets/wporg" \
-	   "$PLUGIN_NAME/assets/wporg/*" \
-	   "$PLUGIN_NAME/.git" \
-	   "$PLUGIN_NAME/.git/*" \
-	   "$PLUGIN_NAME/.github" \
-	   "$PLUGIN_NAME/.github/*" \
-	   "$PLUGIN_NAME/dist" \
-	   "$PLUGIN_NAME/dist/*" \
-	   "$PLUGIN_NAME/handoff" \
-	   "$PLUGIN_NAME/handoff/*" \
-	   "$PLUGIN_NAME/STATUS.md" \
-	   "$PLUGIN_NAME/REPORT-WOO-PLUGIN-0.2.0.md" \
-	   "$PLUGIN_NAME/REPORT-WOO-PLUGIN-0.3.1.md" \
-	   "$PLUGIN_NAME/REPORT-WOO-PLUGIN-0.3.2.md" \
-	   "$PLUGIN_NAME/SUBMIT-WPORG.md" \
-	   "$PLUGIN_NAME/build-zip.sh"
+mkdir -p "$STAGE_DIR/assets" "$STAGE_DIR/languages"
+cp "$PLUGIN_ROOT/LICENSE" "$PLUGIN_ROOT/readme.txt" "$PLUGIN_ROOT/mona-pay-for-woocommerce.php" "$STAGE_DIR/"
+cp -R "$PLUGIN_ROOT/includes" "$STAGE_DIR/"
+cp -R "$PLUGIN_ROOT/assets/js" "$STAGE_DIR/assets/"
+cp "$PLUGIN_ROOT/languages/mona-pay-for-woocommerce.pot" "$STAGE_DIR/languages/"
+
+cd "$TEMP_DIR"
+zip -rq "$TEMP_ZIP" "$PLUGIN_SLUG"
 
 mkdir -p "$DIST_DIR"
 mv "$TEMP_ZIP" "$OUTPUT_ZIP"
-rmdir "$TEMP_DIR"
 trap - EXIT INT TERM
 printf '%s\n' "$OUTPUT_ZIP"

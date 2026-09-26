@@ -1,147 +1,125 @@
 === MONA Pay for WooCommerce ===
-Contributors: themonagroup
-Tags: monapay, vietqr, bank transfer, payment gateway, woocommerce
+Contributors: themona
+Tags: bank transfer, vietqr, woocommerce, vietnam, payment
 Requires at least: 6.2
-Tested up to: 6.8
-Stable tag: 0.3.2
+Tested up to: 7.1
+Stable tag: 0.3.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Chuyển khách sang trang thanh toán MONA Pay hoặc hiện VietQR tại cửa hàng, sau đó tự xác nhận đơn bằng webhook HMAC.
+Automatic bank-transfer confirmation with VietQR, virtual accounts, and signed webhooks for WooCommerce stores in Vietnam.
 
 == Description ==
 
-MONA Pay for WooCommerce provides hosted checkout and inline VietQR modes, then automatically confirms bank transfers through signed webhooks. Funds go directly to the merchant's bank account; MONA Pay does not hold customer funds.
+MONA Pay for WooCommerce provides automatic bank-transfer confirmation using VietQR, virtual accounts, and HMAC-signed webhooks. Funds go straight to the merchant's bank account; MONA Pay never holds funds.
 
-MONA Pay là API ngân hàng cho doanh nghiệp Việt Nam nhận và xác nhận chuyển khoản theo thời gian thực qua tài khoản ảo (VA), VietQR và webhook. Plugin có hai cách thanh toán:
+The plugin supports two payment experiences:
 
-* “Chuyển sang trang thanh toán MONA Pay”: chế độ mặc định cho cài đặt mới. Plugin tạo phiên thanh toán, chuyển quý khách sang `pay.monapay.vn`, giữ đơn ở trạng thái Chờ thanh toán (`pending`) và đưa quý khách về cửa hàng sau khi thanh toán.
-* “Hiện QR tại cửa hàng”: hành vi tương thích 0.2.0. Plugin tạo VietQR theo đơn, đưa đơn sang Tạm giữ (`on-hold`) và hiện QR trên trang cảm ơn, trang xem đơn cùng email.
-* Website đã cấu hình 0.2.0 được giữ chế độ hiện QR khi nâng cấp.
-* Xác minh chữ ký return HMAC-SHA256 trong cửa sổ 10 phút, sau đó gọi API đối chiếu trạng thái và số tiền trước khi hoàn tất đơn.
-* Xác minh webhook HMAC-SHA256 trên raw body, giới hạn timestamp 300 giây.
-* Nhận cả `CHECKOUT_PAID` và `TRANSACTION_IN`; so khớp đơn bằng `DH{id}` hoặc số tài khoản ảo.
-* Kiểm tra số tiền trước khi gọi `payment_complete()`.
-* Chống xử lý trùng bằng `transaction_code`.
-* Có nút bắn webhook thử và tạo giao dịch sandbox 10.000 VND trong cài đặt.
-* Có chế độ sandbox cho hosted checkout để thử toàn bộ luồng mà không cần nối ngân hàng và không chuyển tiền thật.
-* Đơn sandbox có cảnh báo riêng, ghi chú `[Sandbox]` và order action để quản trị viên tạo giao dịch thử đúng giá trị đơn.
-* Hỗ trợ WooCommerce High-Performance Order Storage (HPOS).
+* Hosted checkout redirects the customer to `pay.monapay.vn`, keeps the order pending, and returns the customer to the store after payment.
+* Inline VietQR displays a per-order QR code on the order confirmation page, order page, and customer email.
 
-Plugin dùng Client ID và Client Secret lấy tại my.monapay.vn, không cần lưu mật khẩu tài khoản MONA Pay. Khi nâng cấp từ 0.1.0, thông tin đăng nhập cũ tiếp tục hoạt động ở chế độ fallback ẩn cho tới khi anh chị lưu Client ID mới.
+Payment returns are verified with HMAC-SHA256 and then reconciled against the MONA Pay API before an order is marked paid. Incoming webhooks are authenticated from the unmodified request body, checked against a five-minute timestamp window, and deduplicated by transaction code. The plugin validates the paid amount before calling WooCommerce payment completion.
 
-Dưới ảnh QR ở trang cảm ơn và trang xem đơn, plugin có thể hiển thị dòng “Xác nhận thanh toán tự động bởi MONA Pay” liên kết tới monapay.vn. Tuỳ chọn nhận diện này mặc định tắt, chỉ hiển thị khi quản trị viên chủ động bật trong cài đặt gateway. Plugin không thêm tracker vào liên kết hay giao diện cửa hàng.
+Additional features include WooCommerce High-Performance Order Storage compatibility, an optional sandbox checkout mode, test webhook and transaction tools, and a self-contained QR renderer that does not send QR content to a third-party image service.
 
-Plugin không tải thư viện từ CDN và không gửi chuỗi thanh toán tới dịch vụ dựng QR bên thứ ba. Bộ dựng PNG QR Code chế độ byte, mức sửa lỗi M được phát hành cùng plugin theo GPLv2 hoặc mới hơn.
+Existing stores upgrading from earlier releases keep their gateway settings and inline payment-mode preference. Legacy username/password API credentials remain available as a compatibility fallback when no Client ID has been saved.
 
-Tài liệu: https://monapay.vn/docs | Hotline: 1900 636 648 | Email: info@themona.global
+Vietnamese summary: Plugin giúp cửa hàng WooCommerce nhận chuyển khoản VietQR và tự động xác nhận đơn. Tiền đi thẳng vào tài khoản ngân hàng của người bán; MONA Pay không giữ tiền.
 
 == Installation ==
 
-1. Đăng ký tài khoản tại https://my.monapay.vn/ và cài, kích hoạt plugin cùng WooCommerce.
-2. Trong my.monapay.vn, vào API Keys > Tạo key; lưu Client ID và Client Secret được hiển thị một lần.
-3. Nối tài khoản ACB trong dashboard và xác thực bằng OTP theo hướng dẫn.
-4. Trong MONA Pay Dashboard > Cài đặt > Trang thanh toán, hoàn tất hồ sơ thanh toán và sao chép Secret chữ ký quay về.
-5. Vào WooCommerce > Cài đặt > Thanh toán > MONA Pay VietQR; chọn cách thanh toán, dán Client ID, Client Secret và Secret chữ ký quay về. Chế độ hiện QR cần thêm đầu số VA cùng các thông tin VietQR được cấp.
-6. Tạo Secret HMAC, lưu cài đặt, cấu hình URL webhook đang hiển thị trên MONA Pay rồi bấm “Bắn webhook thử”.
+1. Install and activate WooCommerce.
+2. Upload and activate MONA Pay for WooCommerce.
+3. Create an account at `https://my.monapay.vn/` and connect the supported merchant bank account.
+4. In the MONA Pay dashboard, create a Client ID and Client Secret and configure the hosted payment profile.
+5. Go to WooCommerce > Settings > Payments > MONA Pay VietQR.
+6. Select hosted checkout or inline VietQR, enter the requested credentials, and save the settings.
+7. Generate a webhook HMAC secret, configure the displayed webhook URL in the MONA Pay dashboard, and use the test button to verify delivery.
 
-Website phải dùng HTTPS công khai để MONA Pay gọi được webhook. Đồng hồ máy chủ cần chính xác để kiểm tra cửa sổ chữ ký 300 giây. Muốn dùng nút giao dịch thử cố định trong trang cài đặt, nhập số VA đầy đủ vào ô sandbox, lưu cài đặt rồi bấm “Tạo giao dịch thử (sandbox)”.
-
-== Thử trước khi nối ngân hàng ==
-
-1. Trong WooCommerce > Cài đặt > Thanh toán > MONA Pay VietQR, chọn “Chuyển sang trang thanh toán MONA Pay”.
-2. Bật “Chế độ thử (sandbox)”, lưu Client ID, Client Secret, Secret chữ ký quay về và Secret HMAC webhook. Cấu hình URL webhook như hướng dẫn trên màn hình.
-3. Đặt một đơn VND trên cửa hàng. Plugin gửi `sandbox: true` khi tạo hosted checkout; trang MONA Pay và trang đơn hàng đều cho biết đây là phiên thử, không chuyển tiền thật.
-4. Để giả lập thanh toán, mở đơn đang chờ trong quản trị WooCommerce, chọn “MONA Pay: Tạo giao dịch thử (sandbox)” ở khối Hành động đơn hàng rồi bấm áp dụng. Plugin dùng VA của checkout (hoặc “Số VA để thử sandbox” đã lưu), đúng tổng tiền và nội dung `DH{id}`; webhook xác nhận đơn như giao dịch thật.
-5. Phải tắt “Chế độ thử (sandbox)” trước khi bán thật. Plugin hiển thị cảnh báo tại trang cài đặt trong suốt thời gian chế độ thử đang bật.
-
-Nút “Tạo giao dịch thử (sandbox)” trong trang cài đặt vẫn tạo giao dịch cố định 10.000 VND cho số VA đã lưu. Chế độ “Hiện QR tại cửa hàng” tiếp tục dùng cấu hình VietQR/VA hiện có; hosted checkout là luồng được khuyến nghị để thử khi chưa nối ngân hàng.
+The store must use public HTTPS so MONA Pay can reach its webhook endpoint. Keep the server clock accurate because signed requests have a limited validity window.
 
 == Frequently Asked Questions ==
 
-= Tiền của khách có đi qua MONA Pay không? =
+= Does MONA Pay hold customer funds? =
 
-Không. Tiền chuyển thẳng vào tài khoản ngân hàng của anh chị. MONA Pay nhận thông báo giao dịch từ ngân hàng và gửi webhook có chữ ký về WooCommerce để xác nhận đơn.
+No. Funds are transferred directly to the merchant's bank account. MONA Pay receives transaction information and sends a signed confirmation to WooCommerce.
 
-= Plugin hỗ trợ ngân hàng nào? =
+= Which currencies are supported? =
 
-ACB đang hoạt động. MONA Pay sẽ bổ sung ngân hàng theo lộ trình sản phẩm.
+The payment method is available for VND orders.
 
-= Phí sử dụng là bao nhiêu? =
+= What is the webhook URL? =
 
-Gói khởi đầu miễn phí 500 giao dịch mỗi tháng. Khách hàng MONA được miễn phí theo chính sách hiện hành của MONA Pay.
+The URL has the form `https://example.com/wp-json/monapay/v1/webhook`. The exact URL is shown in the gateway settings.
 
-= Plugin dùng URL webhook nào? =
+= Why is the payment method missing at checkout? =
 
-URL có dạng `https://ten-mien-cua-ban.vn/wp-json/monapay/v1/webhook`. URL chính xác được hiển thị trong cài đặt gateway.
+Confirm that the order currency is VND and that all required settings for the selected payment mode have been saved. Hosted checkout requires API credentials, a return-signature secret, and a webhook secret. Inline VietQR also requires the merchant's VietQR and virtual-account details.
 
-= Vì sao phương thức không xuất hiện ở checkout? =
+= What happens when a customer cancels hosted checkout? =
 
-Plugin chỉ hiện với tiền tệ VND và khi thông tin bắt buộc của chế độ đã chọn được lưu. Chế độ chuyển hướng cần Client ID, Client Secret, Secret chữ ký quay về và Secret HMAC webhook. Chế độ hiện QR cần thêm thông tin VietQR. Bản nâng cấp từ 0.1.0 vẫn dùng được username/password cũ khi Client ID còn trống.
+The order remains pending. The plugin shows a not-paid notice, and the customer can reopen an active checkout from the order page.
 
-= Quý khách huỷ trên trang thanh toán thì đơn có bị huỷ không? =
+= What happens when the transferred amount is too low? =
 
-Không. Plugin giữ đơn ở trạng thái Chờ thanh toán và hiển thị thông báo “Chưa thanh toán”. Quý khách có thể mở lại trang thanh toán từ trang đơn hàng khi phiên còn dùng được.
+The plugin adds an order note and leaves the order unpaid. The event is also written to the WooCommerce log.
 
-= Khách chuyển thiếu tiền thì sao? =
+= Where can I find logs? =
 
-Plugin ghi chú vào đơn, ghi WooCommerce log và giữ nguyên trạng thái. Webhook hợp lệ vẫn được xác nhận đã nhận để tránh gửi lại vô ích.
-
-= Tôi tìm log ở đâu? =
-
-Vào WooCommerce > Trạng thái > Logs và chọn source `woocommerce-monapay`.
+Go to WooCommerce > Status > Logs and select the `mona-pay-for-woocommerce` source.
 
 == Screenshots ==
 
-1. Cài đặt gateway với Client ID, Client Secret, VietQR, webhook và công cụ sandbox.
-2. Checkout hiển thị phương thức Chuyển khoản VietQR tự xác nhận.
-3. Trang cảm ơn hiển thị QR, số tiền, VA và dòng nhận diện MONA Pay có thể tắt.
-4. Nhật ký webhook trong WooCommerce giúp kiểm tra giao dịch đã xác nhận.
+1. Gateway settings for credentials, payment mode, webhook, and sandbox tools.
+2. MONA Pay VietQR at WooCommerce checkout.
+3. VietQR payment instructions on the order confirmation page.
+4. WooCommerce logs for signed payment notifications.
 
 == External services ==
 
-Plugin kết nối tới dịch vụ MONA Pay tại `https://api.monapay.vn` khi quản trị viên cấu hình gateway và quý khách chọn thanh toán. Dịch vụ được dùng để cấp access token, tạo và đọc phiên hosted checkout, tạo VietQR, bắn webhook thử và tạo giao dịch sandbox theo yêu cầu của quản trị viên.
+This plugin connects to the MONA Pay API at `https://api.monapay.vn` when an administrator configures or tests the payment method and when a customer chooses MONA Pay. The API is used to obtain an access token, create and read hosted checkout sessions, generate VietQR payment data, send a test webhook, and create a sandbox transaction when an administrator explicitly requests one.
 
-Khi tạo hosted checkout, plugin gửi số tiền, mã đơn, mô tả, URL quay về, URL huỷ, email và tên thanh toán nếu có, cùng ID đơn WooCommerce trong metadata; khi chế độ thử bật, plugin gửi thêm cờ `sandbox: true`. Khi tạo VietQR, plugin gửi mã đơn, số tiền và thông tin tài khoản nhận do quản trị viên cấu hình. Khi dùng công cụ thử, plugin gửi URL webhook, cấu hình HMAC hoặc số VA sandbox tương ứng. Order action sandbox gửi số VA, tổng tiền của đơn và nội dung `DH{id}`. Plugin không tự gửi dữ liệu phân tích, dữ liệu quảng cáo hay dữ liệu theo dõi.
+For hosted checkout, the plugin sends the order amount, merchant order code, payment description, return URL, cancellation URL, billing email and billing name when available, and the WooCommerce order ID in metadata. Sandbox checkouts also send a sandbox flag. For inline VietQR, it sends the order code, amount, and merchant-configured receiving-account information. Test tools send the webhook URL and HMAC configuration or the configured virtual-account number, amount, and order description.
 
-Chính sách bảo mật: https://monapay.vn/chinh-sach-bao-mat
+Customers are redirected to `https://pay.monapay.vn` to review and complete hosted checkout. Data displayed there comes from the checkout session described above. The plugin does not send analytics, advertising, or tracking data.
 
-Điều khoản dịch vụ: https://monapay.vn/dieu-khoan
+MONA Pay Terms of Service: https://monapay.vn/dieu-khoan
+
+MONA Pay Privacy Policy: https://monapay.vn/chinh-sach-bao-mat
 
 == Privacy ==
 
-Plugin lưu ID, token, URL và trạng thái hosted checkout hoặc ID QR, chuỗi QR, số tài khoản ảo, cờ đơn sandbox, cùng mã giao dịch đã xử lý trong meta riêng của đơn hàng. Client Secret, Secret chữ ký quay về và Secret HMAC webhook được lưu trong cài đặt WordPress của gateway, chỉ dùng phía máy chủ. Front-end và email không nhận các secret này. Plugin không có tracker và không tải tài nguyên từ CDN.
+The plugin stores checkout IDs, tokens, URLs, status, QR data, virtual-account details, sandbox state, and processed transaction codes in private WooCommerce order metadata. API credentials, return-signature secrets, and webhook HMAC secrets are stored in the WordPress gateway settings and used only on the server. Secrets are not included in customer-facing pages or email. The plugin does not load resources from a CDN and does not include a tracker.
 
 == Changelog ==
 
+= 0.3.3 =
+
+* Renamed the WordPress.org slug, main plugin file, and text domain to `mona-pay-for-woocommerce` while preserving the existing gateway ID and option keys.
+* Rewrote the plugin readme in English and documented all MONA Pay external-service data flows.
+* Added explicit direct-access protection to every PHP file.
+* Documented public redirect and image requests, sanitized their query parameters, and authenticated them with HMAC signatures or WooCommerce order keys.
+* Removed the obsolete manual translation-loading call and resolved Plugin Check output-escaping findings.
+
 = 0.3.2 =
 
-* Thêm checkbox “Chế độ thử (sandbox)” mặc định tắt; hosted checkout gửi `sandbox: true` khi bật và bỏ hẳn trường này khi tắt.
-* Đánh dấu đơn sandbox bằng meta, ghi chú `[Sandbox]`, cảnh báo vàng ở giao diện thanh toán và cảnh báo tại trang cài đặt.
-* Thêm order action tạo giao dịch sandbox đúng tổng tiền cho đơn đang chờ rồi để webhook xác nhận như giao dịch thật.
-* Thêm kiểm thử payload sandbox/live cho hosted checkout.
+* Added an optional hosted-checkout sandbox mode and sandbox order indicators.
+* Added an order action that creates a correctly valued sandbox transaction for webhook testing.
 
 = 0.3.1 =
 
-* Dòng nhận diện “Xác nhận thanh toán tự động bởi MONA Pay” chuyển sang mặc định tắt (opt-in), đúng hướng dẫn WordPress.org về liên kết ghi nhận.
+* Made the optional MONA Pay attribution link opt-in.
 
 = 0.3.0 =
 
-* Thêm chế độ mặc định “Chuyển sang trang thanh toán MONA Pay” qua `POST /api/v1/checkouts`, Idempotency-Key theo lần thử và trạng thái đơn `pending`.
-* Thêm endpoint return xác minh HMAC-SHA256 trong 10 phút, gọi `GET /api/v1/checkouts/{id}` để đối chiếu trạng thái cùng số tiền trước khi xác nhận đơn.
-* Nhận webhook `CHECKOUT_PAID` bên cạnh `TRANSACTION_IN`, dùng chung cơ chế chống trùng theo `transaction_code`.
-* Hiển thị trạng thái và nút mở lại trang thanh toán ở trang cảm ơn, trang xem đơn cùng email khách khi đơn còn chờ.
-* Giữ chế độ “Hiện QR tại cửa hàng” và tự bảo toàn lựa chọn này cho website đã cấu hình bản 0.2.0.
+* Added hosted checkout, signed payment returns, checkout reconciliation, and `CHECKOUT_PAID` webhook support.
+* Preserved inline VietQR mode for stores upgrading from version 0.2.0.
 
 = 0.2.0 =
 
-* Chuyển xác thực mặc định sang OAuth client credentials bằng Client ID và Client Secret, cache token theo `expires_in`, tự làm mới một lần khi gặp HTTP 401.
-* Giữ fallback ẩn username/password cho website nâng cấp từ 0.1.0.
-* Thêm công cụ tạo giao dịch sandbox 10.000 VND cho VA đã cấu hình.
-* Thêm dòng nhận diện MONA Pay tuỳ chọn dưới ảnh QR trên trang cảm ơn và trang xem đơn.
-* Bổ sung khai báo dịch vụ ngoài, tài sản WordPress.org, test OAuth và script đóng gói phát hành.
+* Added OAuth client credentials, sandbox tools, WordPress.org assets, and automated tests.
 
 = 0.1.0 =
 
-* Phát hành đầu tiên với VietQR động, ảnh QR nội bộ, webhook HMAC, chống trùng, gửi thử webhook và HPOS.
+* Initial release with dynamic VietQR, local QR rendering, HMAC webhooks, deduplication, and HPOS support.

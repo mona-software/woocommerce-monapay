@@ -5,7 +5,9 @@
  * @package MonaPay_WooCommerce
  */
 
-defined( 'ABSPATH' ) || defined( 'MONAPAY_TESTING' ) || exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 class MonaPay_API {
 	/** @var string */
@@ -70,7 +72,7 @@ class MonaPay_API {
 	public function get_checkout( $checkout_id ) {
 		$checkout_id = trim( (string) $checkout_id );
 		if ( '' === $checkout_id ) {
-			throw new Exception( __( 'Mã phiên thanh toán MONA Pay không hợp lệ.', 'woocommerce-monapay' ) );
+			throw new Exception( esc_html__( 'Mã phiên thanh toán MONA Pay không hợp lệ.', 'mona-pay-for-woocommerce' ) );
 		}
 
 		return $this->request( 'GET', '/api/v1/checkouts/' . rawurlencode( $checkout_id ), null );
@@ -166,8 +168,8 @@ class MonaPay_API {
 			throw new Exception(
 				sprintf(
 					/* translators: %s: connection error detail. */
-					__( 'Không thể kết nối MONA Pay: %s', 'woocommerce-monapay' ),
-					$response->get_error_message()
+					esc_html__( 'Không thể kết nối MONA Pay: %s', 'mona-pay-for-woocommerce' ),
+					esc_html( sanitize_text_field( $response->get_error_message() ) )
 				)
 			);
 		}
@@ -181,7 +183,7 @@ class MonaPay_API {
 		}
 
 		if ( $status < 200 || $status >= 300 || ! is_array( $json ) || ( isset( $json['success'] ) && false === $json['success'] ) ) {
-			throw new Exception( $this->response_error_message( $json, $status ) );
+			throw new Exception( esc_html( sanitize_text_field( $this->response_error_message( $json, $status ) ) ) );
 		}
 
 		return isset( $json['data'] ) && is_array( $json['data'] ) ? $json['data'] : array();
@@ -231,8 +233,8 @@ class MonaPay_API {
 			throw new Exception(
 				sprintf(
 					/* translators: %s: authentication connection error detail. */
-					__( 'Không thể xác thực MONA Pay: %s', 'woocommerce-monapay' ),
-					$response->get_error_message()
+					esc_html__( 'Không thể xác thực MONA Pay: %s', 'mona-pay-for-woocommerce' ),
+					esc_html( sanitize_text_field( $response->get_error_message() ) )
 				)
 			);
 		}
@@ -242,7 +244,7 @@ class MonaPay_API {
 		$token  = is_array( $json ) && isset( $json['data']['access_token'] ) ? (string) $json['data']['access_token'] : '';
 
 		if ( $status < 200 || $status >= 300 || ( isset( $json['success'] ) && false === $json['success'] ) || '' === $token ) {
-			throw new Exception( $this->response_error_message( $json, $status ) );
+			throw new Exception( esc_html( sanitize_text_field( $this->response_error_message( $json, $status ) ) ) );
 		}
 
 		$default_expires = $using_client_credentials ? HOUR_IN_SECONDS : DAY_IN_SECONDS;
@@ -263,7 +265,7 @@ class MonaPay_API {
 		$has_legacy_credentials = '' === $this->client_id && '' !== $this->username && '' !== $this->password && '' !== $this->client_secret;
 
 		if ( ! wp_http_validate_url( $this->base_url ) || ( ! $has_client_credentials && ! $has_legacy_credentials ) ) {
-			throw new Exception( __( 'Cấu hình API MONA Pay chưa đầy đủ.', 'woocommerce-monapay' ) );
+			throw new Exception( esc_html__( 'Cấu hình API MONA Pay chưa đầy đủ.', 'mona-pay-for-woocommerce' ) );
 		}
 	}
 
@@ -288,7 +290,7 @@ class MonaPay_API {
 		if ( is_array( $json ) && isset( $json['message'] ) && is_string( $json['message'] ) && '' !== $json['message'] ) {
 			return sprintf(
 				/* translators: 1: HTTP status code, 2: API error detail. */
-				__( 'MONA Pay (%1$d): %2$s', 'woocommerce-monapay' ),
+				esc_html__( 'MONA Pay (%1$d): %2$s', 'mona-pay-for-woocommerce' ),
 				$status,
 				sanitize_text_field( $json['message'] )
 			);
@@ -297,7 +299,7 @@ class MonaPay_API {
 		if ( is_array( $json ) && isset( $json['detail'] ) && is_string( $json['detail'] ) ) {
 			return sprintf(
 				/* translators: 1: HTTP status code, 2: API error detail. */
-				__( 'MONA Pay (%1$d): %2$s', 'woocommerce-monapay' ),
+				esc_html__( 'MONA Pay (%1$d): %2$s', 'mona-pay-for-woocommerce' ),
 				$status,
 				sanitize_text_field( $json['detail'] )
 			);
@@ -305,7 +307,7 @@ class MonaPay_API {
 
 		return sprintf(
 			/* translators: %d: HTTP status code. */
-			__( 'MONA Pay trả về lỗi HTTP %d.', 'woocommerce-monapay' ),
+			esc_html__( 'MONA Pay trả về lỗi HTTP %d.', 'mona-pay-for-woocommerce' ),
 			$status
 		);
 	}

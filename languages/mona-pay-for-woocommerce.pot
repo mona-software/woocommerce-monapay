@@ -1,0 +1,559 @@
+# Copyright (C) 2026 The MONA Group
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: MONA Pay for WooCommerce 0.3.3\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/woocommerce-monapay\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-09-26T06:05:14+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: mona-pay-for-woocommerce\n"
+
+#. Plugin Name of the plugin
+#: mona-pay-for-woocommerce.php
+msgid "MONA Pay for WooCommerce"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: mona-pay-for-woocommerce.php
+msgid "https://monapay.vn/"
+msgstr ""
+
+#. Description of the plugin
+#: mona-pay-for-woocommerce.php
+msgid "Automatic bank-transfer confirmation with VietQR, virtual accounts, and signed webhooks for WooCommerce."
+msgstr ""
+
+#. Author of the plugin
+#: mona-pay-for-woocommerce.php
+msgid "The MONA Group"
+msgstr ""
+
+#. Author URI of the plugin
+#: mona-pay-for-woocommerce.php
+msgid "https://mona.software/"
+msgstr ""
+
+#: includes/class-monapay-api.php:75
+msgid "Mã phiên thanh toán MONA Pay không hợp lệ."
+msgstr ""
+
+#. translators: %s: connection error detail.
+#: includes/class-monapay-api.php:171
+#, php-format
+msgid "Không thể kết nối MONA Pay: %s"
+msgstr ""
+
+#. translators: %s: authentication connection error detail.
+#: includes/class-monapay-api.php:236
+#, php-format
+msgid "Không thể xác thực MONA Pay: %s"
+msgstr ""
+
+#: includes/class-monapay-api.php:268
+msgid "Cấu hình API MONA Pay chưa đầy đủ."
+msgstr ""
+
+#. translators: 1: HTTP status code, 2: API error detail.
+#: includes/class-monapay-api.php:293
+#: includes/class-monapay-api.php:302
+#, php-format
+msgid "MONA Pay (%1$d): %2$s"
+msgstr ""
+
+#. translators: %d: HTTP status code.
+#: includes/class-monapay-api.php:310
+#, php-format
+msgid "MONA Pay trả về lỗi HTTP %d."
+msgstr ""
+
+#: includes/class-monapay-return.php:38
+#: includes/class-monapay-return.php:97
+#: includes/class-monapay-return.php:98
+msgid "Chưa thanh toán."
+msgstr ""
+
+#: includes/class-monapay-return.php:40
+msgid "Liên kết huỷ thanh toán không hợp lệ."
+msgstr ""
+
+#: includes/class-monapay-return.php:48
+msgid "Liên kết xác nhận thanh toán không hợp lệ. Vui lòng thử lại."
+msgstr ""
+
+#: includes/class-monapay-return.php:76
+msgid "Thanh toán đang chờ xác nhận."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:16
+msgid "MONA Pay VietQR"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:17
+msgid "Chuyển khách sang trang MONA Pay hoặc hiện VietQR tại cửa hàng, sau đó tự xác nhận bằng webhook HMAC."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:24
+#: includes/class-wc-gateway-monapay.php:50
+msgid "Chuyển khoản VietQR (tự xác nhận)"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:25
+#: includes/class-wc-gateway-monapay.php:57
+msgid "Quét mã VietQR để chuyển khoản. Đơn hàng được xác nhận tự động khi MONA Pay nhận giao dịch."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:42
+msgid "Bật/tắt"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:44
+msgid "Bật thanh toán MONA Pay VietQR"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:48
+msgid "Tiêu đề"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:52
+msgid "Tên phương thức khách thấy tại trang thanh toán."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:55
+msgid "Mô tả"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:58
+msgid "Nội dung hiển thị bên dưới phương thức thanh toán."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:61
+msgid "Cách thanh toán"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:64
+msgid "Chọn nơi quý khách xem mã QR và thực hiện thanh toán."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:66
+msgid "Chuyển sang trang thanh toán MONA Pay"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:67
+msgid "Hiện QR tại cửa hàng"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:71
+msgid "Chế độ thử (sandbox)"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:73
+msgid "Không chuyển tiền thật, dùng khi chưa nối ngân hàng"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:75
+msgid "Phiên thanh toán thử chỉ dành cho kiểm tra tích hợp. Phải tắt chế độ sandbox trước khi bán thật."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:78
+msgid "Kết nối MONA Pay"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:80
+msgid "Vào my.monapay.vn → API Keys → Tạo key, hoặc dùng khối “Đưa cho AI” sau khi đăng ký."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:83
+msgid "Base URL"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:86
+msgid "URL gốc của MONA Pay API, không thêm /api/v1."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:90
+msgid "Client ID"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:92
+msgid "Lấy tại my.monapay.vn → API Keys → Tạo key."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:96
+msgid "Client Secret"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:98
+msgid "Secret chỉ hiển thị một lần khi tạo key; plugin dùng để lấy token và gửi header X-Client-Secret."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:102
+msgid "Secret chữ ký quay về"
+msgstr ""
+
+#. translators: %s: MONA Pay hosted checkout documentation URL.
+#: includes/class-wc-gateway-monapay.php:106
+#, php-format
+msgid "Lấy tại MONA Pay Dashboard → Cài đặt → Trang thanh toán. <a href=\"%s\" target=\"_blank\" rel=\"noopener noreferrer\">Xem hướng dẫn</a>."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:112
+msgid "Thông tin VietQR"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:114
+msgid "Sao chép đúng các giá trị ACB/MONA Pay đã cấp cho tài khoản nhận tiền."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:117
+msgid "Đầu số tài khoản ảo"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:119
+msgid "virtualAccountPrefix, dài từ 1 đến 10 ký tự."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:123
+msgid "Số tài khoản nhận tiền"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:125
+msgid "ownerNumber của tài khoản ACB."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:128
+msgid "Loại chủ tài khoản"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:132
+msgid "Cá nhân (PER)"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:133
+msgid "Tổ chức (ORG)"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:137
+msgid "Merchant ID"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:141
+msgid "Terminal ID"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:145
+msgid "Tên người thụ hưởng"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:147
+msgid "beneficiaryName hiển thị trên ứng dụng ngân hàng, tối đa 100 ký tự."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:151
+msgid "Số VA để thử sandbox"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:153
+msgid "Số tài khoản ảo đầy đủ đã nối ACB. Lưu trường này để bật nút tạo giao dịch thử 10.000 VND."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:156
+msgid "Webhook tự xác nhận"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:158
+msgid "Dùng HMAC-SHA256 để chỉ chấp nhận webhook thật từ MONA Pay."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:161
+msgid "Secret HMAC webhook"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:163
+msgid "Dùng cùng secret này khi tạo cấu hình webhook HMAC_SHA256 trên MONA Pay. Nên dài ít nhất 32 ký tự."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:166
+msgid "Tự hoàn tất đơn"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:168
+msgid "Chuyển thẳng đơn sang Hoàn tất sau khi nhận đủ tiền"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:170
+msgid "Nếu tắt, WooCommerce chọn Đang xử lý/Hoàn tất theo loại sản phẩm sau payment_complete()."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:173
+msgid "Nhận diện MONA Pay"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:175
+msgid "Hiển thị dòng xác nhận tự động bởi MONA Pay trên trang đơn hàng"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:177
+msgid "Tuỳ chọn này mặc định TẮT; chỉ bật khi quý khách chủ động muốn ghi nhận MONA Pay trên trang đơn hàng."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:180
+msgid "Cấu hình và kiểm tra"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:231
+msgid "Không tìm thấy đơn hàng để thanh toán qua MONA Pay."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:236
+msgid "MONA Pay chỉ hỗ trợ đơn hàng VND."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:242
+msgid "Tổng đơn vượt giới hạn thanh toán của MONA Pay."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:256
+msgid "Tổng đơn cần từ 1.000 VND để thanh toán trên MONA Pay."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:329
+#: includes/class-wc-gateway-monapay.php:331
+msgid "Đã tạo trang thanh toán MONA Pay; đang chờ giao dịch."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:336
+msgid "Chưa thể mở trang thanh toán MONA Pay. Vui lòng thử lại hoặc chọn phương thức khác."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:389
+msgid "Chưa thể tạo mã VietQR. Vui lòng thử lại hoặc chọn phương thức thanh toán khác."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:395
+msgid "Đã tạo VietQR MONA Pay; đang chờ giao dịch ngân hàng."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:438
+#: includes/class-wc-gateway-monapay.php:556
+msgid "Đơn thử nghiệm (sandbox), không chuyển tiền thật"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:441
+msgid "THANH TOÁN MONA PAY"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:442
+msgid "Mở trang thanh toán:"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:446
+msgid "THANH TOÁN VIETQR MONA PAY"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:447
+#: includes/class-wc-gateway-monapay.php:491
+msgid "Nội dung chuyển khoản:"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:449
+#: includes/class-wc-gateway-monapay.php:488
+msgid "Số tài khoản ảo:"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:451
+msgid "Mở ảnh QR:"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:476
+msgid "Quét VietQR để thanh toán"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:478
+msgid "Quý khách vui lòng kiểm tra thông tin thanh toán trước khi thực hiện giao dịch."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:480
+msgid "Mã VietQR thanh toán đơn hàng"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:483
+#: includes/class-wc-gateway-monapay.php:518
+msgid "Xác nhận thanh toán tự động bởi MONA Pay"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:490
+msgid "Người thụ hưởng:"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:493
+msgid "Đơn hàng sẽ được xác nhận tự động sau khi ngân hàng ghi nhận giao dịch."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:503
+msgid "Đã thanh toán"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:503
+msgid "Đang chờ thanh toán"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:505
+msgid "Chưa thanh toán"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:510
+msgid "Thanh toán MONA Pay"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:512
+msgid "Trạng thái:"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:515
+msgid "Mở lại trang thanh toán"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:546
+msgid "[Sandbox] Đơn thử nghiệm, không chuyển tiền thật."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:604
+msgid "Base URL MONA Pay không hợp lệ."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:656
+msgid "Secret HMAC webhook phải dài ít nhất 32 ký tự."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:680
+msgid "Tự sinh secret"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:703
+msgid "Trong dashboard my.monapay.vn, tạo webhook với URL trên, auth_type HMAC_SHA256, payload application/json và cùng Secret HMAC. Lưu cài đặt này trước khi gửi thử."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:704
+msgid "Mở MONA Pay Dashboard"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:707
+msgid "Bắn webhook thử"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:708
+msgid "Tạo giao dịch thử (sandbox)"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:712
+msgid "Nhập và lưu “Số VA để thử sandbox” để bật nút giao dịch thử."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:728
+msgid "MONA Pay đang bật chế độ thử (sandbox)."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:728
+msgid "Không có tiền thật được chuyển; hãy tắt chế độ này trước khi bán thật."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:736
+msgid "MONA Pay: Tạo giao dịch thử (sandbox)"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:751
+msgid "[Sandbox] Chưa thể tạo giao dịch thử: checkout và cài đặt chưa có số tài khoản ảo."
+msgstr ""
+
+#. translators: %s: sandbox transaction code.
+#: includes/class-wc-gateway-monapay.php:762
+#, php-format
+msgid "[Sandbox] Đã tạo giao dịch thử cho đơn này. Mã giao dịch: %s. Đang chờ webhook xác nhận."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:765
+msgid "[Sandbox] Đã tạo giao dịch thử cho đơn này. Đang chờ webhook xác nhận."
+msgstr ""
+
+#. translators: %s: MONA Pay API error.
+#: includes/class-wc-gateway-monapay.php:772
+#, php-format
+msgid "[Sandbox] Không thể tạo giao dịch thử: %s"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:851
+msgid "Bắn một webhook giả lập từ MONA Pay tới website này?"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:852
+msgid "Tạo giao dịch sandbox 10.000 VND cho VA đã cấu hình?"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:853
+msgid "Đang bắn webhook thử…"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:854
+msgid "Đang tạo giao dịch sandbox…"
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:855
+msgid "Không thể hoàn tất thao tác thử."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:856
+msgid "Đã tạo secret mới. Hãy lưu cài đặt và cập nhật cùng secret trên MONA Pay."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:864
+#: includes/class-wc-gateway-monapay.php:886
+msgid "Bạn không có quyền thực hiện thao tác này."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:870
+msgid "Hãy lưu Secret HMAC dài ít nhất 32 ký tự trước."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:876
+msgid "Webhook thử đã được MONA Pay gửi và endpoint trả về thành công."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:892
+msgid "Hãy nhập và lưu số VA đầy đủ trước khi tạo giao dịch sandbox."
+msgstr ""
+
+#. translators: %s: sandbox transaction code.
+#: includes/class-wc-gateway-monapay.php:902
+#, php-format
+msgid "Đã tạo giao dịch sandbox 10.000 VND. Mã giao dịch: %s."
+msgstr ""
+
+#: includes/class-wc-gateway-monapay.php:905
+msgid "Đã tạo giao dịch sandbox 10.000 VND; MONA Pay đang gửi webhook."
+msgstr ""
+
+#. translators: 1: received amount, 2: required amount, 3: bank transaction code.
+#: includes/monapay-functions.php:143
+#, php-format
+msgid "MONA Pay nhận thiếu: %1$s / %2$s VND (mã %3$s). Đơn chưa được xác nhận."
+msgstr ""
+
+#. translators: %s: bank transaction code.
+#: includes/monapay-functions.php:170
+#, php-format
+msgid "MONA Pay đã tự động xác nhận thanh toán. Mã giao dịch: %s."
+msgstr ""
+
+#: includes/monapay-functions.php:176
+msgid "MONA Pay tự động hoàn tất đơn theo cấu hình."
+msgstr ""
+
+#: mona-pay-for-woocommerce.php:50
+msgid "MONA Pay for WooCommerce cần WooCommerce được cài đặt và kích hoạt."
+msgstr ""

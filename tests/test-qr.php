@@ -4,6 +4,7 @@
  */
 
 define( 'MONAPAY_TESTING', true );
+define( 'ABSPATH', dirname( __DIR__ ) . '/' );
 require_once dirname( __DIR__ ) . '/includes/class-monapay-qr-code.php';
 
 $payload = '00020101021238540010A000000727012400069704160110MONA000123520400005303704540725000005802VN5914CONG TY MONA6008HOCHIMINH62130509DH102346304ABCD';
@@ -34,4 +35,3 @@ if ( isset( $argv[1] ) && '' !== $argv[1] ) {
 }
 
 echo 'PASS: QR version ' . ( ( count( $matrix ) - 17 ) / 4 ) . ', ' . strlen( $png ) . " PNG bytes\n";
-

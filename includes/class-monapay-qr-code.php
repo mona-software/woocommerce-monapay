@@ -10,7 +10,9 @@
  * @package MonaPay_WooCommerce
  */
 
-defined( 'ABSPATH' ) || defined( 'MONAPAY_TESTING' ) || exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 class MonaPay_QR_Code {
 	/** Error-correction block layout for QR level M: count, total, data. */

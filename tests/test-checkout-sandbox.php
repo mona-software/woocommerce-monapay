@@ -6,6 +6,7 @@
  */
 
 define( 'MONAPAY_TESTING', true );
+define( 'ABSPATH', dirname( __DIR__ ) . '/' );
 require_once dirname( __DIR__ ) . '/includes/monapay-functions.php';
 
 $failures = 0;

@@ -4,6 +4,7 @@
  */
 
 define( 'MONAPAY_TESTING', true );
+define( 'ABSPATH', dirname( __DIR__ ) . '/' );
 require_once dirname( __DIR__ ) . '/includes/monapay-functions.php';
 
 $failures = 0;
@@ -49,4 +50,3 @@ monapay_test_assert( null === monapay_parse_order_id( 'DH0' ), 'không chấp nh
 
 echo "\n{$tests} tests, {$failures} failures\n";
 exit( $failures > 0 ? 1 : 0 );
-
