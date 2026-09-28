@@ -3,7 +3,7 @@
  * Plugin Name:       MONA Pay for WooCommerce
  * Plugin URI:        https://monapay.vn/
  * Description:       Automatic bank-transfer confirmation with VietQR, virtual accounts, and signed webhooks for WooCommerce.
- * Version:           0.3.3
+ * Version:           0.3.4
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Requires Plugins:  woocommerce
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MONAPAY_WC_VERSION', '0.3.3' );
+define( 'MONAPAY_WC_VERSION', '0.3.4' );
 define( 'MONAPAY_WC_FILE', __FILE__ );
 define( 'MONAPAY_WC_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MONAPAY_WC_URL', plugin_dir_url( __FILE__ ) );
@@ -45,8 +45,14 @@ function monapay_missing_woocommerce_notice() {
 	if ( ! current_user_can( 'activate_plugins' ) ) {
 		return;
 	}
+
+	// Guideline 11: keep the dependency notice to the screens where it is actionable.
+	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( $screen && ! in_array( $screen->id, array( 'dashboard', 'plugins', 'plugin-install' ), true ) && 0 !== strpos( (string) $screen->id, 'woocommerce' ) ) {
+		return;
+	}
 	?>
-	<div class="notice notice-error">
+	<div class="notice notice-error is-dismissible">
 		<p><?php esc_html_e( 'MONA Pay for WooCommerce cần WooCommerce được cài đặt và kích hoạt.', 'mona-pay-for-woocommerce' ); ?></p>
 	</div>
 	<?php

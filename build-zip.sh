@@ -4,10 +4,10 @@ set -eu
 PLUGIN_ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
 PLUGIN_SLUG="mona-pay-for-woocommerce"
 DIST_DIR="$PLUGIN_ROOT/dist"
-OUTPUT_ZIP="$DIST_DIR/mona-pay-for-woocommerce-0.3.3.zip"
+OUTPUT_ZIP="$DIST_DIR/mona-pay-for-woocommerce-0.3.4.zip"
 TEMP_DIR=$(mktemp -d "${TMPDIR:-/tmp}/mona-pay-for-woocommerce-build.XXXXXX")
 STAGE_DIR="$TEMP_DIR/$PLUGIN_SLUG"
-TEMP_ZIP="$TEMP_DIR/mona-pay-for-woocommerce-0.3.3.zip"
+TEMP_ZIP="$TEMP_DIR/mona-pay-for-woocommerce-0.3.4.zip"
 
 cleanup() {
 	rm -rf "$TEMP_DIR"

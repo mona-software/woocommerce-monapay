@@ -3,7 +3,7 @@ Contributors: themona
 Tags: bank transfer, vietqr, woocommerce, vietnam, payment
 Requires at least: 6.2
 Tested up to: 7.1
-Stable tag: 0.3.3
+Stable tag: 0.3.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -13,6 +13,8 @@ Automatic bank-transfer confirmation with VietQR, virtual accounts, and signed w
 == Description ==
 
 MONA Pay for WooCommerce provides automatic bank-transfer confirmation using VietQR, virtual accounts, and HMAC-signed webhooks. Funds go straight to the merchant's bank account; MONA Pay never holds funds.
+
+This plugin relies on the MONA Pay API, an external service operated by The MONA Group. See the "External services" section below for what is sent, when, and the links to its terms of service and privacy policy.
 
 The plugin supports two payment experiences:
 
@@ -78,21 +80,46 @@ Go to WooCommerce > Status > Logs and select the `mona-pay-for-woocommerce` sour
 
 == External services ==
 
-This plugin connects to the MONA Pay API at `https://api.monapay.vn` when an administrator configures or tests the payment method and when a customer chooses MONA Pay. The API is used to obtain an access token, create and read hosted checkout sessions, generate VietQR payment data, send a test webhook, and create a sandbox transaction when an administrator explicitly requests one.
+This plugin connects to MONA Pay, a bank-transfer confirmation service operated by The MONA Group (Ho Chi Minh City, Vietnam). The service is required for the plugin to work: it issues checkout sessions and VietQR payment data, and it notifies the store when a transfer arrives. The plugin does not work without a MONA Pay merchant account.
 
-For hosted checkout, the plugin sends the order amount, merchant order code, payment description, return URL, cancellation URL, billing email and billing name when available, and the WooCommerce order ID in metadata. Sandbox checkouts also send a sandbox flag. For inline VietQR, it sends the order code, amount, and merchant-configured receiving-account information. Test tools send the webhook URL and HMAC configuration or the configured virtual-account number, amount, and order description.
+**1. MONA Pay API (`https://api.monapay.vn`)**
 
-Customers are redirected to `https://pay.monapay.vn` to review and complete hosted checkout. Data displayed there comes from the checkout session described above. The plugin does not send analytics, advertising, or tracking data.
+What it is used for: obtaining an API access token, creating and reading hosted checkout sessions, generating VietQR payment data for an order, and running the optional test tools on the settings screen.
 
-MONA Pay Terms of Service: https://monapay.vn/dieu-khoan
+What data is sent and when:
 
-MONA Pay Privacy Policy: https://monapay.vn/chinh-sach-bao-mat
+* When an administrator saves or tests the gateway settings: the API credentials (Client ID and secret, or legacy username and password) to obtain an access token; when the "send test webhook" button is used, the store's webhook URL and HMAC configuration; when the "create sandbox transaction" button is used, the configured virtual-account number, a test amount and a test order description.
+* When a customer places an order with MONA Pay in hosted-checkout mode: the order amount, currency (VND), the merchant order code, a payment description, the return URL and cancellation URL of the store, the customer's billing name and billing email when available, the WooCommerce order ID as metadata, and a sandbox flag when sandbox mode is enabled.
+* When a customer places an order in inline VietQR mode: the merchant order code, the order amount and the merchant-configured receiving-account details.
+* When a payment return or webhook is received: the checkout ID or transaction code is sent back to the API to confirm the payment status before the order is marked paid.
+
+No data is sent on the storefront when the payment method is not used, and the plugin sends no analytics, advertising or tracking data.
+
+The "Base URL" setting defaults to `https://api.monapay.vn` and exists only so that MONA Pay can point a merchant to a staging endpoint that MONA Pay operates; it is not intended for third-party services.
+
+**2. MONA Pay hosted checkout page (`https://pay.monapay.vn`)**
+
+In hosted-checkout mode the customer's browser is redirected to this page to review the order and complete the bank transfer. The page shows the checkout session created through the API above; the plugin itself sends no additional data to it.
+
+**3. MONA Pay merchant portal (`https://my.monapay.vn`)**
+
+The settings screen links to this portal so administrators can create API keys. The plugin does not send any data to it.
+
+Service provider: MONA Pay, The MONA Group.
+
+* Terms of service: https://monapay.vn/dieu-khoan
+* Privacy policy: https://monapay.vn/chinh-sach-bao-mat
 
 == Privacy ==
 
 The plugin stores checkout IDs, tokens, URLs, status, QR data, virtual-account details, sandbox state, and processed transaction codes in private WooCommerce order metadata. API credentials, return-signature secrets, and webhook HMAC secrets are stored in the WordPress gateway settings and used only on the server. Secrets are not included in customer-facing pages or email. The plugin does not load resources from a CDN and does not include a tracker.
 
 == Changelog ==
+
+= 0.3.4 =
+
+* Documented every MONA Pay external service (API, hosted checkout page, merchant portal) with the data sent, the triggering events, and links to the terms of service and privacy policy.
+* Limited the WooCommerce dependency notice to the Dashboard, Plugins and WooCommerce screens and made it dismissible.
 
 = 0.3.3 =
 
