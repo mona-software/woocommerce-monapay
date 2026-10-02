@@ -3,3 +3,5 @@ __pycache__
 *.pyc
 vendor
 .DS_Store
+logs/
+dist/*.zip
