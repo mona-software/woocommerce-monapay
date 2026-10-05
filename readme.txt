@@ -3,7 +3,7 @@ Contributors: themona
 Tags: bank transfer, vietqr, woocommerce, vietnam, payment
 Requires at least: 6.2
 Tested up to: 7.1
-Stable tag: 0.3.4
+Stable tag: 0.3.5
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -23,7 +23,7 @@ The plugin supports two payment experiences:
 
 Payment returns are verified with HMAC-SHA256 and then reconciled against the MONA Pay API before an order is marked paid. Incoming webhooks are authenticated from the unmodified request body, checked against a five-minute timestamp window, and deduplicated by transaction code. The plugin validates the paid amount before calling WooCommerce payment completion.
 
-Additional features include WooCommerce High-Performance Order Storage compatibility, an optional sandbox checkout mode, test webhook and transaction tools, and a self-contained QR renderer that does not send QR content to a third-party image service.
+Additional features include compatibility with WooCommerce High-Performance Order Storage and the Cart and Checkout blocks, an optional sandbox checkout mode, test webhook and transaction tools, and a self-contained QR renderer that does not send QR content to a third-party image service.
 
 Existing stores upgrading from earlier releases keep their gateway settings and inline payment-mode preference. Legacy username/password API credentials remain available as a compatibility fallback when no Client ID has been saved.
 
@@ -112,9 +112,20 @@ Service provider: MONA Pay, The MONA Group.
 
 == Privacy ==
 
-The plugin stores checkout IDs, tokens, URLs, status, QR data, virtual-account details, sandbox state, and processed transaction codes in private WooCommerce order metadata. API credentials, return-signature secrets, and webhook HMAC secrets are stored in the WordPress gateway settings and used only on the server. Secrets are not included in customer-facing pages or email. The plugin does not load resources from a CDN and does not include a tracker.
+The plugin stores checkout IDs, tokens, URLs, status, QR data, virtual-account details, sandbox state, and processed transaction codes in private WooCommerce order metadata. API credentials, return-signature secrets, and webhook HMAC secrets are stored in the WordPress gateway settings and used only on the server. Secrets are not included in customer-facing pages or email. The plugin does not load resources from a CDN and does not include a tracker. Deleting the plugin removes its settings and cached tokens; order metadata is kept as the store's payment record.
 
 == Changelog ==
+
+= 0.3.5 =
+
+* Added support for the WooCommerce Cart and Checkout blocks and declared the compatibility.
+* A failed payment attempt now shows a clear message at checkout instead of an error page.
+* Interface text now uses English as the source language, with a bundled Vietnamese translation, so it can be translated on translate.wordpress.org.
+* A payment that arrives twice at the same moment (webhook and customer return) is now applied once, and a second transfer for a paid order is recorded in an order note for review.
+* The QR image is served from a WooCommerce API URL outside wp-admin and is cached privately by the browser; existing links in sent emails keep working.
+* The webhook endpoint rejects oversized bodies before parsing them.
+* The QR encoder is loaded only when an image is requested.
+* Added `uninstall.php` to remove saved settings, cached tokens and locks when the plugin is deleted.
 
 = 0.3.4 =
 

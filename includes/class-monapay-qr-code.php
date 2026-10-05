@@ -70,7 +70,7 @@ class MonaPay_QR_Code {
 	 */
 	public static function png( $text, $scale = 4, $quiet_zone = 4 ) {
 		if ( ! function_exists( 'gzcompress' ) ) {
-			throw new Exception( 'Máy chủ cần extension zlib để dựng ảnh QR.' );
+			throw new Exception( 'The server needs the zlib extension to render the QR image.' );
 		}
 
 		$matrix     = self::matrix( $text );
@@ -116,11 +116,12 @@ class MonaPay_QR_Code {
 	 * @throws Exception When the payload exceeds QR version 40 capacity.
 	 */
 	public static function matrix( $text ) {
-		$bytes   = array_values( unpack( 'C*', (string) $text ) ?: array() );
-		$version = self::choose_version( count( $bytes ) );
-		$data    = self::create_codewords( $bytes, $version );
-		$size    = 17 + ( 4 * $version );
-		$matrix  = array_fill( 0, $size, array_fill( 0, $size, null ) );
+		$unpacked = unpack( 'C*', (string) $text );
+		$bytes    = is_array( $unpacked ) ? array_values( $unpacked ) : array();
+		$version  = self::choose_version( count( $bytes ) );
+		$data     = self::create_codewords( $bytes, $version );
+		$size     = 17 + ( 4 * $version );
+		$matrix   = array_fill( 0, $size, array_fill( 0, $size, null ) );
 
 		self::draw_finder( $matrix, 0, 0 );
 		self::draw_finder( $matrix, $size - 7, 0 );
@@ -150,7 +151,7 @@ class MonaPay_QR_Code {
 			}
 		}
 
-		throw new Exception( 'Chuỗi QR vượt quá dung lượng QR Code phiên bản 40.' );
+		throw new Exception( 'The QR content exceeds the capacity of a version 40 QR code.' );
 	}
 
 	/**
@@ -169,16 +170,19 @@ class MonaPay_QR_Code {
 			self::append_bits( $bits, $byte, 8 );
 		}
 
-		$remaining = ( $capacity * 8 ) - count( $bits );
-		for ( $i = 0; $i < min( 4, $remaining ); $i++ ) {
+		$remaining  = ( $capacity * 8 ) - count( $bits );
+		$terminator = min( 4, $remaining );
+		for ( $i = 0; $i < $terminator; $i++ ) {
 			$bits[] = 0;
 		}
-		while ( 0 !== count( $bits ) % 8 ) {
+		$bit_count = count( $bits );
+		while ( 0 !== $bit_count % 8 ) {
 			$bits[] = 0;
+			++$bit_count;
 		}
 
 		$data_bytes = array();
-		for ( $offset = 0; $offset < count( $bits ); $offset += 8 ) {
+		for ( $offset = 0; $offset < $bit_count; $offset += 8 ) {
 			$value = 0;
 			for ( $bit = 0; $bit < 8; $bit++ ) {
 				$value = ( $value << 1 ) | $bits[ $offset + $bit ];
@@ -186,20 +190,22 @@ class MonaPay_QR_Code {
 			$data_bytes[] = $value;
 		}
 
-		$pad = 0;
-		while ( count( $data_bytes ) < $capacity ) {
+		$pad        = 0;
+		$byte_count = count( $data_bytes );
+		while ( $byte_count < $capacity ) {
 			$data_bytes[] = 0 === $pad % 2 ? 0xec : 0x11;
-			$pad++;
+			++$pad;
+			++$byte_count;
 		}
 
 		$blocks      = array();
 		$data_offset = 0;
 		foreach ( self::expanded_blocks( $version ) as $block ) {
-			$data_count  = $block[1];
-			$total_count = $block[0];
-			$block_data  = array_slice( $data_bytes, $data_offset, $data_count );
+			$data_count   = $block[1];
+			$total_count  = $block[0];
+			$block_data   = array_slice( $data_bytes, $data_offset, $data_count );
 			$data_offset += $data_count;
-			$blocks[] = array(
+			$blocks[]     = array(
 				'data' => $block_data,
 				'ecc'  => self::reed_solomon_remainder( $block_data, $total_count - $data_count ),
 			);
@@ -282,9 +288,9 @@ class MonaPay_QR_Code {
 	 * @return array
 	 */
 	private static function reed_solomon_remainder( $data, $degree ) {
-		$divisor              = array_fill( 0, $degree, 0 );
+		$divisor                = array_fill( 0, $degree, 0 );
 		$divisor[ $degree - 1 ] = 1;
-		$root                 = 1;
+		$root                   = 1;
 
 		for ( $i = 0; $i < $degree; $i++ ) {
 			for ( $j = 0; $j < $degree; $j++ ) {
@@ -318,7 +324,7 @@ class MonaPay_QR_Code {
 	private static function gf_multiply( $x, $y ) {
 		$result = 0;
 		for ( $i = 7; $i >= 0; $i-- ) {
-			$result = ( $result << 1 ) ^ ( ( $result >> 7 ) * 0x11d );
+			$result  = ( $result << 1 ) ^ ( ( $result >> 7 ) * 0x11d );
 			$result ^= ( ( $y >> $i ) & 1 ) * $x;
 		}
 		return $result;
@@ -335,8 +341,8 @@ class MonaPay_QR_Code {
 					continue;
 				}
 
-				$inside = $dx >= 0 && $dx <= 6 && $dy >= 0 && $dy <= 6;
-				$dark   = $inside && ( 0 === $dx || 6 === $dx || 0 === $dy || 6 === $dy || ( $dx >= 2 && $dx <= 4 && $dy >= 2 && $dy <= 4 ) );
+				$inside                 = $dx >= 0 && $dx <= 6 && $dy >= 0 && $dy <= 6;
+				$dark                   = $inside && ( 0 === $dx || 6 === $dx || 0 === $dy || 6 === $dy || ( $dx >= 2 && $dx <= 4 && $dy >= 2 && $dy <= 4 ) );
 				$matrix[ $row ][ $col ] = $dark;
 			}
 		}
@@ -364,9 +370,9 @@ class MonaPay_QR_Code {
 		if ( 1 === $version ) {
 			return array();
 		}
-		$count = intdiv( $version, 7 ) + 2;
-		$step  = 32 === $version ? 26 : intdiv( ( 4 * $version ) + ( 2 * $count ) + 1, ( 2 * $count ) - 2 ) * 2;
-		$size  = 17 + ( 4 * $version );
+		$count  = intdiv( $version, 7 ) + 2;
+		$step   = 32 === $version ? 26 : intdiv( ( 4 * $version ) + ( 2 * $count ) + 1, ( 2 * $count ) - 2 ) * 2;
+		$size   = 17 + ( 4 * $version );
 		$result = array( 6 );
 		for ( $i = 1; $i < $count; $i++ ) {
 			$result[] = $size - 7 - ( ( $count - 1 - $i ) * $step );
@@ -392,8 +398,8 @@ class MonaPay_QR_Code {
 		$size = count( $matrix );
 		$bits = self::bch_format( $mask ); // M has format level value 0.
 		for ( $i = 0; $i < 15; $i++ ) {
-			$dark = 1 === ( ( $bits >> $i ) & 1 );
-			$row  = $i < 6 ? $i : ( $i < 8 ? $i + 1 : $size - 15 + $i );
+			$dark              = 1 === ( ( $bits >> $i ) & 1 );
+			$row               = $i < 6 ? $i : ( $i < 8 ? $i + 1 : $size - 15 + $i );
 			$matrix[ $row ][8] = $dark;
 
 			if ( $i < 8 ) {
@@ -432,7 +438,7 @@ class MonaPay_QR_Code {
 
 		for ( $col = $size - 1; $col > 0; $col -= 2 ) {
 			if ( 6 === $col ) {
-				$col--;
+				--$col;
 			}
 
 			while ( true ) {
@@ -451,16 +457,16 @@ class MonaPay_QR_Code {
 					}
 					$matrix[ $row ][ $current_col ] = $dark;
 
-					$bit_index--;
+					--$bit_index;
 					if ( -1 === $bit_index ) {
-						$byte_index++;
+						++$byte_index;
 						$bit_index = 7;
 					}
 				}
 
 				$row += $direction;
 				if ( $row < 0 || $row >= $size ) {
-					$row       -= $direction;
+					$row      -= $direction;
 					$direction = -$direction;
 					break;
 				}
@@ -512,7 +518,7 @@ class MonaPay_QR_Code {
 	private static function bit_length( $value ) {
 		$length = 0;
 		while ( 0 !== $value ) {
-			$length++;
+			++$length;
 			$value >>= 1;
 		}
 		return $length;

@@ -14,3 +14,4 @@ jobs:
       - run: php tests/test-oauth.php
       - run: php tests/test-qr.php /tmp/monapay-test-qr.png
       - run: node --check assets/js/admin-settings.js
+      - run: node --check assets/js/blocks-checkout.js

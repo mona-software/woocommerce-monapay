@@ -3,7 +3,7 @@
  * Plugin Name:       MONA Pay for WooCommerce
  * Plugin URI:        https://monapay.vn/
  * Description:       Automatic bank-transfer confirmation with VietQR, virtual accounts, and signed webhooks for WooCommerce.
- * Version:           0.3.4
+ * Version:           0.3.5
  * Requires at least: 6.2
  * Requires PHP:      7.4
  * Requires Plugins:  woocommerce
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MONAPAY_WC_VERSION', '0.3.4' );
+define( 'MONAPAY_WC_VERSION', '0.3.5' );
 define( 'MONAPAY_WC_FILE', __FILE__ );
 define( 'MONAPAY_WC_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MONAPAY_WC_URL', plugin_dir_url( __FILE__ ) );
@@ -34,6 +34,7 @@ define( 'MONAPAY_WC_URL', plugin_dir_url( __FILE__ ) );
 function monapay_declare_compatibility() {
 	if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
 		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'cart_checkout_blocks', __FILE__, true );
 	}
 }
 add_action( 'before_woocommerce_init', 'monapay_declare_compatibility' );
@@ -53,7 +54,7 @@ function monapay_missing_woocommerce_notice() {
 	}
 	?>
 	<div class="notice notice-error is-dismissible">
-		<p><?php esc_html_e( 'MONA Pay for WooCommerce cần WooCommerce được cài đặt và kích hoạt.', 'mona-pay-for-woocommerce' ); ?></p>
+		<p><?php esc_html_e( 'MONA Pay for WooCommerce needs WooCommerce to be installed and active.', 'mona-pay-for-woocommerce' ); ?></p>
 	</div>
 	<?php
 }
@@ -69,11 +70,10 @@ function monapay_init() {
 
 	require_once MONAPAY_WC_PATH . 'includes/monapay-functions.php';
 	require_once MONAPAY_WC_PATH . 'includes/class-monapay-api.php';
-	require_once MONAPAY_WC_PATH . 'includes/class-monapay-qr-code.php';
 	require_once MONAPAY_WC_PATH . 'includes/class-monapay-qr-endpoint.php';
 	require_once MONAPAY_WC_PATH . 'includes/class-monapay-webhook.php';
 	require_once MONAPAY_WC_PATH . 'includes/class-monapay-return.php';
-	require_once MONAPAY_WC_PATH . 'includes/class-wc-gateway-monapay.php';
+	require_once MONAPAY_WC_PATH . 'includes/class-monapay-gateway.php';
 
 	monapay_upgrade_030_settings();
 	$GLOBALS['monapay_qr_endpoint'] = new MonaPay_QR_Endpoint();
@@ -83,6 +83,20 @@ function monapay_init() {
 	add_action( 'wp_ajax_monapay_test_sandbox', 'monapay_handle_test_sandbox' );
 }
 add_action( 'plugins_loaded', 'monapay_init', 20 );
+
+/**
+ * Offer MONA Pay in the Cart and Checkout blocks.
+ *
+ * @param \Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $registry Blocks payment method registry.
+ */
+function monapay_register_blocks_support( $registry ) {
+	if ( ! class_exists( '\Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' ) ) {
+		return;
+	}
+	require_once MONAPAY_WC_PATH . 'includes/class-monapay-blocks-support.php';
+	$registry->register( new MonaPay_Blocks_Support() );
+}
+add_action( 'woocommerce_blocks_payment_method_type_registration', 'monapay_register_blocks_support' );
 
 /** Preserve the 0.2.0 inline behavior on configured stores during upgrade. */
 function monapay_upgrade_030_settings() {

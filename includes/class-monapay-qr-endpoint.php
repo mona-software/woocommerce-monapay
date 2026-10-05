@@ -10,8 +10,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 class MonaPay_QR_Endpoint {
-	/** Register public and authenticated admin-post handlers. */
+	/**
+	 * Register the image handlers.
+	 *
+	 * The WooCommerce API route is the canonical URL because it lives outside
+	 * /wp-admin/, which hosts and firewalls often restrict. The admin-post pair
+	 * stays so links already sent in customer emails keep working.
+	 */
 	public function __construct() {
+		add_action( 'woocommerce_api_monapay_qr', array( $this, 'serve' ) );
 		add_action( 'admin_post_monapay_qr_image', array( $this, 'serve' ) );
 		add_action( 'admin_post_nopriv_monapay_qr_image', array( $this, 'serve' ) );
 	}
@@ -25,11 +32,10 @@ class MonaPay_QR_Endpoint {
 	public static function get_url( $order ) {
 		return add_query_arg(
 			array(
-				'action'   => 'monapay_qr_image',
 				'order_id' => $order->get_id(),
 				'key'      => $order->get_order_key(),
 			),
-			admin_url( 'admin-post.php' )
+			WC()->api_request_url( 'monapay_qr' )
 		);
 	}
 
@@ -40,8 +46,8 @@ class MonaPay_QR_Endpoint {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public image URL is authenticated with the WooCommerce order key below.
 		$order_id = isset( $_GET['order_id'] ) ? absint( sanitize_text_field( wp_unslash( $_GET['order_id'] ) ) ) : 0;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public image URL is authenticated with the WooCommerce order key below.
-		$key      = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
-		$order    = $order_id ? wc_get_order( $order_id ) : false;
+		$key   = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
+		$order = $order_id ? wc_get_order( $order_id ) : false;
 
 		if ( ! $order || '' === $key || ! hash_equals( (string) $order->get_order_key(), $key ) ) {
 			status_header( 404 );
@@ -53,6 +59,9 @@ class MonaPay_QR_Endpoint {
 			status_header( 404 );
 			exit;
 		}
+
+		// The encoder is only needed here, so it is not parsed on ordinary requests.
+		require_once MONAPAY_WC_PATH . 'includes/class-monapay-qr-code.php';
 
 		try {
 			$png = MonaPay_QR_Code::png( $qr_data, 5, 4 );
@@ -70,7 +79,9 @@ class MonaPay_QR_Endpoint {
 			exit;
 		}
 
-		nocache_headers();
+		// The payload of an order never changes, so a private day-long cache spares
+		// re-encoding every time a mail client or the order page asks for the image.
+		header( 'Cache-Control: private, max-age=86400' );
 		header( 'Content-Type: image/png' );
 		header( 'Content-Length: ' . strlen( $png ) );
 		header( 'Content-Disposition: inline; filename="monapay-qr-' . $order_id . '.png"' );

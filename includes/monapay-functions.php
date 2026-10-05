@@ -118,6 +118,39 @@ if ( ! function_exists( 'monapay_verify_return_signature' ) ) {
 	}
 }
 
+if ( ! function_exists( 'monapay_acquire_order_lock' ) ) {
+	/**
+	 * Take a short per-order lock. add_option() is an INSERT on a UNIQUE key, so
+	 * exactly one of two concurrent requests can win; a lock older than a minute
+	 * is treated as abandoned by a request that died.
+	 *
+	 * @param int $order_id WooCommerce order ID.
+	 * @return bool True when the caller now holds the lock.
+	 */
+	function monapay_acquire_order_lock( $order_id ) {
+		$key = 'monapay_lock_' . (int) $order_id;
+		if ( add_option( $key, time(), '', false ) ) {
+			return true;
+		}
+		if ( time() - (int) get_option( $key, 0 ) > 60 ) {
+			delete_option( $key );
+			return (bool) add_option( $key, time(), '', false );
+		}
+		return false;
+	}
+}
+
+if ( ! function_exists( 'monapay_release_order_lock' ) ) {
+	/**
+	 * Release the lock taken by monapay_acquire_order_lock().
+	 *
+	 * @param int $order_id WooCommerce order ID.
+	 */
+	function monapay_release_order_lock( $order_id ) {
+		delete_option( 'monapay_lock_' . (int) $order_id );
+	}
+}
+
 if ( ! function_exists( 'monapay_complete_order_payment' ) ) {
 	/**
 	 * Apply a verified MONA Pay payment to an order exactly once per transaction.
@@ -140,7 +173,7 @@ if ( ! function_exists( 'monapay_complete_order_payment' ) ) {
 			$order->add_order_note(
 				sprintf(
 					/* translators: 1: received amount, 2: required amount, 3: bank transaction code. */
-					__( 'MONA Pay nhận thiếu: %1$s / %2$s VND (mã %3$s). Đơn chưa được xác nhận.', 'mona-pay-for-woocommerce' ),
+					__( 'MONA Pay received too little: %1$s / %2$s VND (code %3$s). The order has not been confirmed.', 'mona-pay-for-woocommerce' ),
 					wc_format_localized_price( $paid_amount ),
 					wc_format_localized_price( $order_total ),
 					$transaction_code
@@ -149,31 +182,54 @@ if ( ! function_exists( 'monapay_complete_order_payment' ) ) {
 			return 'underpaid';
 		}
 
-		$transaction_codes = $order->get_meta( '_monapay_txn_codes', true );
-		$transaction_codes = is_array( $transaction_codes ) ? array_map( 'strval', $transaction_codes ) : array();
-		$is_duplicate      = in_array( $transaction_code, $transaction_codes, true ) || $transaction_code === (string) $order->get_transaction_id();
-		if ( $is_duplicate && $order->is_paid() ) {
+		// The webhook and the customer's return can arrive together; only one may apply the payment.
+		if ( ! monapay_acquire_order_lock( $order->get_id() ) ) {
 			return 'duplicate';
 		}
 
-		if ( ! in_array( $transaction_code, $transaction_codes, true ) ) {
-			$transaction_codes[] = $transaction_code;
-			$order->update_meta_data( '_monapay_txn_codes', array_values( array_unique( $transaction_codes ) ) );
-		}
-		$order->update_meta_data( '_monapay_checkout_status', 'paid' );
-		$order->save();
+		try {
+			$transaction_codes = $order->get_meta( '_monapay_txn_codes', true );
+			$transaction_codes = is_array( $transaction_codes ) ? array_map( 'strval', $transaction_codes ) : array();
+			$known_code        = in_array( $transaction_code, $transaction_codes, true ) || $transaction_code === (string) $order->get_transaction_id();
+			if ( $known_code && $order->is_paid() ) {
+				return 'duplicate';
+			}
 
-		$order->payment_complete( $transaction_code );
-		$order->add_order_note(
-			sprintf(
-				/* translators: %s: bank transaction code. */
-				__( 'MONA Pay đã tự động xác nhận thanh toán. Mã giao dịch: %s.', 'mona-pay-for-woocommerce' ),
-				$transaction_code
-			)
-		);
+			if ( ! $known_code ) {
+				$transaction_codes[] = $transaction_code;
+				$order->update_meta_data( '_monapay_txn_codes', array_values( array_unique( $transaction_codes ) ) );
+			}
 
-		if ( $autocomplete && ! $order->has_status( 'completed' ) ) {
-			$order->update_status( 'completed', __( 'MONA Pay tự động hoàn tất đơn theo cấu hình.', 'mona-pay-for-woocommerce' ) );
+			if ( $order->is_paid() ) {
+				// A second transfer for an order that is already paid: keep the record, never re-complete it.
+				$order->save();
+				$order->add_order_note(
+					sprintf(
+						/* translators: %s: bank transaction code. */
+						__( 'MONA Pay received another payment for an order that is already paid. Transaction code: %s. Check whether a refund is due.', 'mona-pay-for-woocommerce' ),
+						$transaction_code
+					)
+				);
+				return 'duplicate';
+			}
+
+			$order->update_meta_data( '_monapay_checkout_status', 'paid' );
+			$order->save();
+
+			$order->payment_complete( $transaction_code );
+			$order->add_order_note(
+				sprintf(
+					/* translators: %s: bank transaction code. */
+					__( 'MONA Pay confirmed the payment automatically. Transaction code: %s.', 'mona-pay-for-woocommerce' ),
+					$transaction_code
+				)
+			);
+
+			if ( $autocomplete && ! $order->has_status( 'completed' ) ) {
+				$order->update_status( 'completed', __( 'MONA Pay completed the order automatically, as configured.', 'mona-pay-for-woocommerce' ) );
+			}
+		} finally {
+			monapay_release_order_lock( $order->get_id() );
 		}
 
 		return 'completed';

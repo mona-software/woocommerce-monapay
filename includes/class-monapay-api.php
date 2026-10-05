@@ -72,7 +72,7 @@ class MonaPay_API {
 	public function get_checkout( $checkout_id ) {
 		$checkout_id = trim( (string) $checkout_id );
 		if ( '' === $checkout_id ) {
-			throw new Exception( esc_html__( 'Mã phiên thanh toán MONA Pay không hợp lệ.', 'mona-pay-for-woocommerce' ) );
+			throw new Exception( esc_html__( 'The MONA Pay checkout ID is not valid.', 'mona-pay-for-woocommerce' ) );
 		}
 
 		return $this->request( 'GET', '/api/v1/checkouts/' . rawurlencode( $checkout_id ), null );
@@ -91,11 +91,11 @@ class MonaPay_API {
 			'POST',
 			'/api/v1/client-webhooks/test',
 			array(
-				'webhook_url'   => $webhook_url,
-				'auth_type'     => 'HMAC_SHA256',
-				'secret_key'    => $hmac_secret,
+				'webhook_url'    => $webhook_url,
+				'auth_type'      => 'HMAC_SHA256',
+				'secret_key'     => $hmac_secret,
 				'payload_format' => 'application/json',
-				'is_dummy'      => true,
+				'is_dummy'       => true,
 			)
 		);
 	}
@@ -134,8 +134,8 @@ class MonaPay_API {
 	 */
 	private function request( $method, $path, $body = null, $idempotency_key = '', $retry = true ) {
 		$this->assert_configured();
-		$token = $this->get_access_token();
-		$method = strtoupper( (string) $method );
+		$token   = $this->get_access_token();
+		$method  = strtoupper( (string) $method );
 		$headers = array(
 			'Accept'        => 'application/json',
 			'Authorization' => 'Bearer ' . $token,
@@ -168,7 +168,7 @@ class MonaPay_API {
 			throw new Exception(
 				sprintf(
 					/* translators: %s: connection error detail. */
-					esc_html__( 'Không thể kết nối MONA Pay: %s', 'mona-pay-for-woocommerce' ),
+					esc_html__( 'Could not connect to MONA Pay: %s', 'mona-pay-for-woocommerce' ),
 					esc_html( sanitize_text_field( $response->get_error_message() ) )
 				)
 			);
@@ -233,7 +233,7 @@ class MonaPay_API {
 			throw new Exception(
 				sprintf(
 					/* translators: %s: authentication connection error detail. */
-					esc_html__( 'Không thể xác thực MONA Pay: %s', 'mona-pay-for-woocommerce' ),
+					esc_html__( 'Could not authenticate with MONA Pay: %s', 'mona-pay-for-woocommerce' ),
 					esc_html( sanitize_text_field( $response->get_error_message() ) )
 				)
 			);
@@ -265,7 +265,7 @@ class MonaPay_API {
 		$has_legacy_credentials = '' === $this->client_id && '' !== $this->username && '' !== $this->password && '' !== $this->client_secret;
 
 		if ( ! wp_http_validate_url( $this->base_url ) || ( ! $has_client_credentials && ! $has_legacy_credentials ) ) {
-			throw new Exception( esc_html__( 'Cấu hình API MONA Pay chưa đầy đủ.', 'mona-pay-for-woocommerce' ) );
+			throw new Exception( esc_html__( 'The MONA Pay API settings are incomplete.', 'mona-pay-for-woocommerce' ) );
 		}
 	}
 
@@ -307,7 +307,7 @@ class MonaPay_API {
 
 		return sprintf(
 			/* translators: %d: HTTP status code. */
-			esc_html__( 'MONA Pay trả về lỗi HTTP %d.', 'mona-pay-for-woocommerce' ),
+			esc_html__( 'MONA Pay returned HTTP error %d.', 'mona-pay-for-woocommerce' ),
 			$status
 		);
 	}

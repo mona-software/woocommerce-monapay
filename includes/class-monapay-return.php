@@ -21,31 +21,31 @@ class MonaPay_Return {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public MONA Pay redirect; paid returns are HMAC-verified and cancellations require the WooCommerce order key.
 		$checkout_id = isset( $_GET['monapay_checkout'] ) ? sanitize_text_field( wp_unslash( $_GET['monapay_checkout'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public MONA Pay redirect; paid returns are HMAC-verified below.
-		$order_code  = isset( $_GET['order_code'] ) ? sanitize_text_field( wp_unslash( $_GET['order_code'] ) ) : '';
+		$order_code = isset( $_GET['order_code'] ) ? sanitize_text_field( wp_unslash( $_GET['order_code'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public MONA Pay redirect; status is covered by HMAC or order-key validation.
-		$status      = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
+		$status = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public MONA Pay redirect; timestamp is covered by HMAC verification below.
-		$timestamp   = isset( $_GET['ts'] ) ? sanitize_text_field( wp_unslash( $_GET['ts'] ) ) : '';
+		$timestamp = isset( $_GET['ts'] ) ? sanitize_text_field( wp_unslash( $_GET['ts'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public MONA Pay redirect; this is the HMAC value verified below.
-		$signature   = isset( $_GET['sig'] ) ? sanitize_text_field( wp_unslash( $_GET['sig'] ) ) : '';
+		$signature = isset( $_GET['sig'] ) ? sanitize_text_field( wp_unslash( $_GET['sig'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public cancellation redirect authenticated with the WooCommerce order key.
-		$order_id    = isset( $_GET['order_id'] ) ? absint( sanitize_text_field( wp_unslash( $_GET['order_id'] ) ) ) : 0;
+		$order_id = isset( $_GET['order_id'] ) ? absint( sanitize_text_field( wp_unslash( $_GET['order_id'] ) ) ) : 0;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public cancellation redirect authenticated with the WooCommerce order key.
-		$order_key   = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
+		$order_key = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
 
 		if ( 'cancelled' === $status ) {
 			if ( $this->mark_cancelled( $checkout_id, $order_id, $order_key ) ) {
-				$this->redirect_to_checkout( __( 'Chưa thanh toán.', 'mona-pay-for-woocommerce' ), 'notice' );
+				$this->redirect_to_checkout( __( 'Payment has not been completed.', 'mona-pay-for-woocommerce' ), 'notice' );
 			}
-			$this->redirect_to_checkout( __( 'Liên kết huỷ thanh toán không hợp lệ.', 'mona-pay-for-woocommerce' ), 'error' );
+			$this->redirect_to_checkout( __( 'The payment cancellation link is not valid.', 'mona-pay-for-woocommerce' ), 'error' );
 		}
 
 		$order    = $this->find_paid_return_order( $checkout_id, $order_code );
 		$settings = get_option( 'woocommerce_monapay_vietqr_settings', array() );
 		$secret   = is_array( $settings ) && isset( $settings['return_signature_secret'] ) ? (string) $settings['return_signature_secret'] : '';
 		if ( ! $order || ! monapay_verify_return_signature( $checkout_id, $order_code, $status, $timestamp, $signature, $secret ) ) {
-			$this->log( 'warning', 'Redirect checkout có chữ ký hoặc dữ liệu không hợp lệ.', array( 'checkout_id' => $checkout_id ) );
-			$this->redirect_to_checkout( __( 'Liên kết xác nhận thanh toán không hợp lệ. Vui lòng thử lại.', 'mona-pay-for-woocommerce' ), 'error' );
+			$this->log( 'warning', 'Hosted checkout return has an invalid signature or invalid data.', array( 'checkout_id' => $checkout_id ) );
+			$this->redirect_to_checkout( __( 'The payment confirmation link is not valid. Please try again.', 'mona-pay-for-woocommerce' ), 'error' );
 		}
 
 		try {
@@ -65,15 +65,29 @@ class MonaPay_Return {
 					isset( $settings['autocomplete_orders'] ) && 'yes' === $settings['autocomplete_orders']
 				);
 				if ( in_array( $result, array( 'completed', 'duplicate' ), true ) ) {
-					$this->log( 'info', 'Đã đối chiếu redirect và xác nhận thanh toán.', array( 'order_id' => $order->get_id(), 'checkout_id' => $checkout_id ) );
+					$this->log(
+						'info',
+						'Hosted checkout return reconciled and payment confirmed.',
+						array(
+							'order_id'    => $order->get_id(),
+							'checkout_id' => $checkout_id,
+						)
+					);
 					$this->redirect_to_order( $order );
 				}
 			}
 		} catch ( Exception $exception ) {
-			$this->log( 'error', $exception->getMessage(), array( 'order_id' => $order->get_id(), 'checkout_id' => $checkout_id ) );
+			$this->log(
+				'error',
+				$exception->getMessage(),
+				array(
+					'order_id'    => $order->get_id(),
+					'checkout_id' => $checkout_id,
+				)
+			);
 		}
 
-		$this->redirect_to_order( $order, __( 'Thanh toán đang chờ xác nhận.', 'mona-pay-for-woocommerce' ) );
+		$this->redirect_to_order( $order, __( 'The payment is waiting for confirmation.', 'mona-pay-for-woocommerce' ) );
 	}
 
 	/** Show the cancellation notice when MONA Pay redirects directly to checkout. */
@@ -83,19 +97,19 @@ class MonaPay_Return {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public MONA Pay cancellation redirect authenticated with the WooCommerce order key.
-		$status      = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : '';
+		$status = isset( $_GET['status'] ) ? sanitize_text_field( wp_unslash( $_GET['status'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public MONA Pay cancellation redirect authenticated with the WooCommerce order key.
 		$checkout_id = isset( $_GET['monapay_checkout'] ) ? sanitize_text_field( wp_unslash( $_GET['monapay_checkout'] ) ) : '';
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public cancellation redirect authenticated with the WooCommerce order key.
-		$order_id    = isset( $_GET['order_id'] ) ? absint( sanitize_text_field( wp_unslash( $_GET['order_id'] ) ) ) : 0;
+		$order_id = isset( $_GET['order_id'] ) ? absint( sanitize_text_field( wp_unslash( $_GET['order_id'] ) ) ) : 0;
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Public cancellation redirect authenticated with the WooCommerce order key.
-		$order_key   = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
+		$order_key = isset( $_GET['key'] ) ? sanitize_text_field( wp_unslash( $_GET['key'] ) ) : '';
 		if ( 'cancelled' !== $status || '' === $checkout_id || ! $this->mark_cancelled( $checkout_id, $order_id, $order_key ) ) {
 			return;
 		}
 
-		if ( ! wc_has_notice( __( 'Chưa thanh toán.', 'mona-pay-for-woocommerce' ), 'notice' ) ) {
-			wc_add_notice( __( 'Chưa thanh toán.', 'mona-pay-for-woocommerce' ), 'notice' );
+		if ( ! wc_has_notice( __( 'Payment has not been completed.', 'mona-pay-for-woocommerce' ), 'notice' ) ) {
+			wc_add_notice( __( 'Payment has not been completed.', 'mona-pay-for-woocommerce' ), 'notice' );
 		}
 	}
 
